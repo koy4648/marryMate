@@ -1,4 +1,4 @@
-import type { CreateVenueRequest, CreateVenueVisitRequest } from "./types";
+import type { CreateVenuePlanRequest, CreateVenueVisitRequest, VenuePlanResponse, VenueVisit } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
 
@@ -14,8 +14,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const venueApi = {
   isConfigured: Boolean(API_BASE_URL),
-  createVenue: (body: CreateVenueRequest) =>
-    request<{ id: number }>("/api/v1/venues", { method: "POST", body: JSON.stringify(body) }),
-  createVisit: (venueId: string | number, body: CreateVenueVisitRequest) =>
-    request<{ id: number }>(`/api/v1/venues/${venueId}/visits`, { method: "POST", body: JSON.stringify(body) }),
+  listPlans: () => request<VenuePlanResponse[]>("/api/v1/venue-plans"),
+  createPlan: (body: CreateVenuePlanRequest) =>
+    request<VenuePlanResponse>("/api/v1/venue-plans", { method: "POST", body: JSON.stringify(body) }),
+  getPlan: (planId: string | number) =>
+    request<VenuePlanResponse>(`/api/v1/venue-plans/${planId}`),
+  createVisit: (planId: string | number, body: CreateVenueVisitRequest) =>
+    request<VenueVisit>(`/api/v1/venue-plans/${planId}/visits`, { method: "POST", body: JSON.stringify(body) }),
 };
