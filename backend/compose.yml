@@ -1,0 +1,33 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: marry-mate-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MARRY_MATE_DB_NAME}
+      MYSQL_USER: ${MARRY_MATE_DB_USER}
+      MYSQL_PASSWORD: ${MARRY_MATE_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MARRY_MATE_DB_ROOT_PASSWORD}
+      TZ: UTC
+    ports:
+      - "3306:3306"
+    volumes:
+      - marry_mate_mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u${MARRY_MATE_DB_USER}",
+          "-p${MARRY_MATE_DB_PASSWORD}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  marry_mate_mysql_data:
