@@ -2,13 +2,16 @@ spring:
   application:
     name: marry-mate-api
 
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
   config:
     import: optional:file:.env[.properties]
 
   datasource:
-    url: jdbc:mysql://${MARRY_MATE_DB_HOST:localhost}:${MARRY_MATE_DB_PORT:3306}/${MARRY_MATE_DB_NAME:marry_mate}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-    username: ${MARRY_MATE_DB_USER}
-    password: ${MARRY_MATE_DB_PASSWORD}
+    url: jdbc:mysql://${MARRY_MATE_DB_HOST:${MYSQLHOST:localhost}}:${MARRY_MATE_DB_PORT:${MYSQLPORT:3306}}/${MARRY_MATE_DB_NAME:${MYSQLDATABASE:marry_mate}}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    username: ${MARRY_MATE_DB_USER:${MYSQLUSER:marry_mate}}
+    password: ${MARRY_MATE_DB_PASSWORD:${MYSQLPASSWORD:}}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-timeout: 3000
@@ -28,10 +31,14 @@ spring:
     locations: classpath:db/migration
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+app:
+  cors:
+    allowed-origins: ${MARRY_MATE_CORS_ORIGINS:http://localhost:3000,http://localhost:3001,https://wedget-venue-tour.koy4648.chatgpt.site}
