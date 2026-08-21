@@ -1,6 +1,7 @@
 export type CandidateStatus = "INTERESTED" | "PLANNED" | "SHORTLISTED" | "ON_HOLD" | "REJECTED" | "CONTRACTED";
 export type EvaluationStatus = "UNRATED" | "RATED" | "NOT_OBSERVED";
 export type ChecklistStatus = "UNCHECKED" | "CHECKED" | "NOT_APPLICABLE";
+export type EvaluationCategory = "HALL" | "BRIDAL_WAITING_ROOM" | "ACCESSIBILITY" | "PARKING" | "GUEST_FLOW" | "BANQUET" | "OPERATION" | "PRICE";
 
 export type Venue = {
   id: string;
@@ -21,7 +22,7 @@ export type VenuePrice = {
 
 export type VenueEvaluation = {
   id: string;
-  category: string;
+  category: EvaluationCategory;
   itemName: string;
   status: EvaluationStatus;
   rating: number | null;

@@ -5,6 +5,7 @@ import type {
   CandidateStatus,
   ChecklistItem,
   ChecklistStatus,
+  EvaluationCategory,
   LocalDatabase,
   Venue,
   VenueEvaluation,
@@ -15,15 +16,20 @@ import type {
 const DATABASE_KEY = "wedget:venue-tour:v1";
 const DRAFT_KEY = "wedget:venue-tour:draft:v1";
 
-const evaluationTemplate: Record<string, string[]> = {
-  "홀": ["홀 디자인", "꽃장식", "버진로드", "조명", "음향", "하객 시야", "실제 수용감"],
-  "신부대기실": ["디자인", "크기", "채광", "사진 촬영 환경", "하객 동선"],
-  "접근성": ["대중교통 접근성", "역에서 이동 편의", "건물 찾기 쉬움", "지방 하객 접근성"],
-  "주차": ["차량 진입 동선", "주차 공간", "출차 편의", "혼주 주차", "대절버스 주차"],
-  "하객 동선": ["로비 크기", "로비 혼잡도", "다른 예식과 동선 겹침", "엘리베이터 대기", "축의대 공간"],
-  "연회장": ["연회장 동선", "테이블 간격", "좌석 확보", "혼잡도", "음식 상태", "음식 종류", "음식 리필"],
-  "운영": ["예식 간격", "직원 응대", "안내 상태", "화장실", "건물 청결도"],
-  "가격": ["가격 만족도", "비용 대비 만족도"],
+const evaluationTemplate: Record<EvaluationCategory, string[]> = {
+  HALL: ["홀 디자인", "꽃장식", "버진로드", "조명", "음향", "하객 시야", "실제 수용감"],
+  BRIDAL_WAITING_ROOM: ["디자인", "크기", "채광", "사진 촬영 환경", "하객 동선"],
+  ACCESSIBILITY: ["대중교통 접근성", "역에서 이동 편의", "건물 찾기 쉬움", "지방 하객 접근성"],
+  PARKING: ["차량 진입 동선", "주차 공간", "출차 편의", "혼주 주차", "대절버스 주차"],
+  GUEST_FLOW: ["로비 크기", "로비 혼잡도", "다른 예식과 동선 겹침", "엘리베이터 대기", "축의대 공간"],
+  BANQUET: ["연회장 동선", "테이블 간격", "좌석 확보", "혼잡도", "음식 상태", "음식 종류", "음식 리필"],
+  OPERATION: ["예식 간격", "직원 응대", "안내 상태", "화장실", "건물 청결도"],
+  PRICE: ["가격 만족도", "비용 대비 만족도"],
+};
+
+const evaluationCategoryLabel: Record<string, string> = {
+  HALL: "홀", BRIDAL_WAITING_ROOM: "신부대기실", ACCESSIBILITY: "접근성", PARKING: "주차",
+  GUEST_FLOW: "하객 동선", BANQUET: "연회장", OPERATION: "운영", PRICE: "가격",
 };
 
 const checklistTemplate: Record<string, string[]> = {
@@ -48,7 +54,7 @@ const emptyPrice = (): VenuePrice => ({ baseAndMandatoryAmount: null, pricePerGu
 
 function buildEvaluations(): VenueEvaluation[] {
   let order = 0;
-  return Object.entries(evaluationTemplate).flatMap(([category, items]) => items.map((itemName) => ({ id: makeId(), category, itemName, status: "UNRATED" as const, rating: null, reason: "", sortOrder: order++ })));
+  return Object.entries(evaluationTemplate).flatMap(([category, items]) => items.map((itemName) => ({ id: makeId(), category: category as EvaluationCategory, itemName, status: "UNRATED" as const, rating: null, reason: "", sortOrder: order++ })));
 }
 
 function buildChecklist(): ChecklistItem[] {
@@ -202,7 +208,7 @@ export default function Home() {
         {grouped.length === 0 && <div className="empty-mini">모든 평가를 확인했어요 ✓</div>}
         {grouped.map(({ category, items }, index) => (
           <details className="evaluation-group" key={category} open={index === 0 || showOnlyPending}>
-            <summary><span>{category}</span><small>{draft.evaluations.filter((item) => item.category === category && item.status !== "UNRATED").length}/{draft.evaluations.filter((item) => item.category === category).length}</small></summary>
+            <summary><span>{evaluationCategoryLabel[category] ?? category}</span><small>{draft.evaluations.filter((item) => item.category === category && item.status !== "UNRATED").length}/{draft.evaluations.filter((item) => item.category === category).length}</small></summary>
             <div className="evaluation-list">
               {items.map((item) => <article className="evaluation-item" key={item.id}>
                 <div className="evaluation-title"><strong>{item.itemName}</strong><button className={item.status === "NOT_OBSERVED" ? "skip active" : "skip"} onClick={() => updateEvaluation(item.id, { status: item.status === "NOT_OBSERVED" ? "UNRATED" : "NOT_OBSERVED", rating: null })}>미확인</button></div>
