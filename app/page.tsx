@@ -50,7 +50,7 @@ const statusLabel: Record<CandidateStatus, string> = {
 const makeId = () => typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
 const today = () => new Date().toISOString().slice(0, 10);
 const nowTime = () => new Date().toTimeString().slice(0, 5);
-const emptyPrice = (): VenuePrice => ({ baseAndMandatoryAmount: null, pricePerGuest: null, guaranteedGuestCount: null, expectedGuestCount: null, additionalAmount: null, discountAmount: null });
+const emptyPrice = (): VenuePrice => ({ baseAndMandatoryAmount: null, pricePerGuest: null, guaranteedGuestCount: null, expectedGuestCount: null, additionalAmount: 0, discountAmount: 0 });
 
 function buildEvaluations(): VenueEvaluation[] {
   let order = 0;
