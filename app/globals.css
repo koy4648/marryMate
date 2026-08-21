@@ -72,6 +72,39 @@ input::placeholder,textarea::placeholder { color:#a5aea8; }
 footer { padding:54px 0 8px; display:flex; align-items:center; justify-content:space-between; color:#8b9891; font-size:10px; }
 footer strong { color:var(--ink); font:800 16px Georgia,serif; }
 
+/* Account & couple collaboration */
+.auth-shell { min-height:calc(100dvh - 79px); display:grid; place-items:center; padding:28px 20px 70px; }
+.auth-card { width:min(100%,480px); padding:34px; border:1px solid var(--line); border-radius:30px; background:rgba(255,254,250,.96); box-shadow:0 24px 70px rgba(35,65,54,.12); }
+.auth-card h1 { margin:13px 0 14px; font:500 39px/1.08 Georgia,"Times New Roman",serif; letter-spacing:-.05em; }
+.auth-card>p:not(.eyebrow) { color:var(--muted); font-size:13px; line-height:1.65; }
+.auth-tabs { display:grid; grid-template-columns:1fr 1fr; margin:24px 0 18px; padding:4px; border-radius:13px; background:#edf1ec; }
+.auth-tabs button { height:40px; border:0; border-radius:10px; color:var(--muted); background:transparent; font-size:12px; font-weight:900; cursor:pointer; }
+.auth-tabs button.active { color:var(--forest); background:#fff; box-shadow:0 3px 10px rgba(35,65,54,.08); }
+.auth-card form label { display:block; margin-top:13px; color:#51635b; font-size:11px; font-weight:900; }
+.auth-card form .primary-button { margin-top:20px; }
+.auth-card .auth-error { margin:12px 0 -4px; padding:10px 12px; border-radius:10px; color:#934f47; background:#faece9; font-size:11px; }
+.collaboration-card { margin:0 0 20px; padding:20px; border:1px solid #bdd0c1; border-radius:22px; background:linear-gradient(145deg,#edf5ed,#e4efe7); }
+.collaboration-head { display:flex; align-items:center; justify-content:space-between; }
+.collaboration-head>div { display:flex; flex-direction:column; gap:3px; }
+.collaboration-head small { color:var(--muted); font-size:9px; font-weight:800; }
+.collaboration-head strong { color:var(--forest); font-size:16px; }
+.collaboration-head button,.logout-button { border:0; color:var(--forest); background:transparent; font-size:10px; font-weight:900; cursor:pointer; }
+.workspace-pills { display:flex; gap:6px; margin-top:14px; overflow-x:auto; }
+.workspace-pills button { flex:0 0 auto; padding:8px 10px; border:1px solid #c2d0c4; border-radius:999px; color:var(--muted); background:#fff; font-size:10px; font-weight:800; cursor:pointer; }
+.workspace-pills button.active { border-color:var(--forest); color:#fff; background:var(--forest); }
+.invite-actions { display:flex; align-items:center; gap:8px; margin-top:15px; }
+.invite-actions>button { height:40px; padding:0 12px; border:0; border-radius:11px; color:white; background:var(--forest); font-size:10px; font-weight:900; cursor:pointer; }
+.invite-actions>span { color:var(--muted); font-size:9px; }
+.invite-actions label { flex:1; display:flex; gap:5px; }
+.invite-actions input { min-width:0; height:40px; margin:0; font-size:10px; }
+.invite-actions label button { padding:0 11px; border:1px solid var(--forest); border-radius:10px; color:var(--forest); background:#fff; font-size:10px; font-weight:900; cursor:pointer; }
+.invite-actions label button:disabled { opacity:.45; }
+.invite-code { width:100%; margin-top:12px; padding:12px 14px; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; border:1px dashed #8eaa97; border-radius:12px; color:var(--forest); background:rgba(255,255,255,.65); cursor:pointer; }
+.invite-code span,.invite-code small { font-size:9px; }
+.invite-code strong { overflow:hidden; font-family:monospace; font-size:13px; text-overflow:ellipsis; }
+.collaboration-card>p { margin:10px 0 0; color:var(--forest); font-size:10px; font-weight:800; }
+.logout-button { margin-top:12px; padding:0; color:var(--muted); }
+
 /* Tour form */
 .form-shell { padding-bottom:112px; }
 .form-topbar { min-height:74px; display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:8px; position:sticky; z-index:10; top:0; margin:0 -22px; padding:9px 22px; border-bottom:1px solid rgba(25,51,44,.08); background:rgba(247,244,237,.92); backdrop-filter:blur(16px); }

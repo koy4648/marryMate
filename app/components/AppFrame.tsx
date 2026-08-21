@@ -32,7 +32,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
           </nav>
           <div className="product-context" aria-label="현재 저장 방식">
             <i />
-            <span>이 기기에 저장</span>
+            <span>기기 저장 + 공유 DB</span>
           </div>
         </div>
       </header>

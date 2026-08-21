@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
+  AuthSession,
   CandidateStatus,
   ChecklistItem,
   ContractIntent,
@@ -13,7 +14,10 @@ import type {
   VenueEvaluation,
   VenuePrice,
   VenueVisit,
+  Workspace,
+  CreateVenueVisitRequest,
 } from "../lib/types";
+import { authApi, venueApi, workspaceApi } from "../lib/api";
 import { keyFactCodes, sectionLabel, tourSections } from "./catalog";
 import {
   answerLabel,
@@ -33,6 +37,7 @@ const DATABASE_KEY = "marrymate:venue-tour:v2";
 const DRAFT_KEY = "marrymate:venue-tour:draft:v2";
 const LEGACY_DATABASE_KEY = "wedget:venue-tour:v1";
 const LEGACY_DRAFT_KEY = "wedget:venue-tour:draft:v1";
+const AUTH_KEY = "marrymate:auth:v1";
 
 type VenueRoute = { view: "home" | "compare" | "detail" | "tour"; venueId?: string };
 
@@ -84,6 +89,15 @@ function numberOrNull(value: string) {
   return value === "" ? null : Math.max(0, Number(value));
 }
 
+function toVisitRequest(visit: VenueVisit): CreateVenueVisitRequest {
+  return {
+    visitType: visit.visitType, visitDate: visit.visitDate, visitTime: visit.visitTime,
+    priceSource: visit.priceSource, price: visit.price, evaluations: visit.evaluations,
+    checklistItems: visit.checklistItems, finalAssessment: visit.finalAssessment,
+    resultingCandidateStatus: visit.resultingCandidateStatus, completed: visit.completed,
+  };
+}
+
 export default function VenueTourApp() {
   const [db, setDb] = useState<LocalDatabase>({ schemaVersion: 2, venues: [], visits: [] });
   const [view, setView] = useState<VenueRoute["view"]>("home");
@@ -95,6 +109,9 @@ export default function VenueTourApp() {
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
   const [hydrated, setHydrated] = useState(false);
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -109,6 +126,8 @@ export default function VenueTourApp() {
         else if (legacyDraft) restoredDraft = parseDatabase(JSON.stringify({ visits: [JSON.parse(legacyDraft)] })).database.visits[0] ?? null;
 
         const route = readVenueRoute(window.location.pathname);
+        const storedSession = localStorage.getItem(AUTH_KEY);
+        if (storedSession) setSession(JSON.parse(storedSession) as AuthSession);
         setDb(parsed.database);
         setView(route.view);
         setSelectedVenueId(route.venueId ?? null);
@@ -125,6 +144,54 @@ export default function VenueTourApp() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+
+  const syncFromServer = useCallback(async (activeSession: AuthSession, announce = false) => {
+    if (!activeSession.workspaceId) return;
+    setSyncing(true);
+    try {
+      const local = parseDatabase(localStorage.getItem(DATABASE_KEY)).database;
+      const pendingVenueIds = new Map<string, string>();
+      for (const venue of local.venues.filter((item) => !/^\d+$/.test(item.id))) {
+        const created = await venueApi.createPlan(activeSession, {
+          venueName: venue.name, address: venue.address, candidateStatus: venue.candidateStatus,
+        });
+        pendingVenueIds.set(venue.id, String(created.id));
+      }
+      for (const visit of local.visits.filter((item) => item.completed && !/^\d+$/.test(item.id))) {
+        const planId = pendingVenueIds.get(visit.venueId) ?? visit.venueId;
+        if (!/^\d+$/.test(planId)) continue;
+        await venueApi.createVisit(activeSession, planId, toVisitRequest(visit));
+      }
+      const plans = await venueApi.listPlans(activeSession);
+      const visitGroups = await Promise.all(plans.map((plan) => venueApi.listVisits(activeSession, plan.id)));
+      const remote: LocalDatabase = {
+        schemaVersion: 2,
+        venues: plans.map((plan) => ({
+          id: String(plan.id), name: plan.venue.name, address: plan.venue.address ?? "",
+          candidateStatus: plan.candidateStatus, createdAt: plan.createdAt,
+        })),
+        visits: visitGroups.flat(),
+      };
+      setDb(remote);
+      localStorage.setItem(DATABASE_KEY, JSON.stringify(remote));
+      const available = await workspaceApi.list(activeSession);
+      setWorkspaces(available);
+      if (announce) setNotice("공유 DB와 최신 기록을 동기화했어요.");
+    } catch (error) {
+      setNotice(error instanceof Error ? `${error.message} · 작성 내용은 이 기기에 보관 중이에요.` : "동기화에 실패했어요.");
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated || !session?.workspaceId) return;
+    const initialSync = window.setTimeout(() => void syncFromServer(session), 0);
+    const refresh = () => { if (document.visibilityState === "visible") void syncFromServer(session); };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { window.clearTimeout(initialSync); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [hydrated, session, syncFromServer]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -170,13 +237,21 @@ export default function VenueTourApp() {
     window.scrollTo(0, 0);
   }
 
-  function addVenue() {
+  async function addVenue() {
     if (!venueName.trim()) { setNotice("웨딩홀 이름을 먼저 입력해 주세요."); return; }
-    const venue: Venue = { id: makeId(), name: venueName.trim(), address: venueAddress.trim(), candidateStatus: "PLANNED", createdAt: new Date().toISOString() };
-    setDb((current) => ({ ...current, venues: [venue, ...current.venues] }));
+    const localVenue: Venue = { id: makeId(), name: venueName.trim(), address: venueAddress.trim(), candidateStatus: "PLANNED", createdAt: new Date().toISOString() };
+    try {
+      if (!session) throw new Error("로그인이 필요합니다.");
+      const plan = await venueApi.createPlan(session, { venueName: localVenue.name, address: localVenue.address, candidateStatus: "PLANNED" });
+      const venue: Venue = { ...localVenue, id: String(plan.id), createdAt: plan.createdAt };
+      setDb((current) => ({ ...current, venues: [venue, ...current.venues] }));
+      setNotice("공유 DB에 웨딩홀을 추가했어요.");
+    } catch {
+      setDb((current) => ({ ...current, venues: [localVenue, ...current.venues] }));
+      setNotice("네트워크가 불안정해 이 기기에 저장했어요. 연결되면 동기화됩니다.");
+    }
     setVenueName("");
     setVenueAddress("");
-    setNotice("웨딩홀을 추가했어요.");
   }
 
   function startTour(venue: Venue) {
@@ -202,7 +277,7 @@ export default function VenueTourApp() {
     setDraft((current) => current ? { ...current, finalAssessment: { ...current.finalAssessment, ...changes } } : null);
   }
 
-  function saveTour() {
+  async function saveTour() {
     if (!draft) return;
     const saved = { ...draft, completed: true, savedAt: new Date().toISOString() };
     setDb((current) => ({
@@ -210,10 +285,23 @@ export default function VenueTourApp() {
       venues: current.venues.map((venue) => venue.id === saved.venueId ? { ...venue, candidateStatus: saved.resultingCandidateStatus } : venue),
       visits: [saved, ...current.visits.filter((visit) => visit.id !== saved.id)],
     }));
-    localStorage.removeItem(DRAFT_KEY);
-    setDraft(null);
-    navigate("detail", saved.venueId);
-    setNotice("암행투어 기록을 안전하게 저장했어요.");
+    try {
+      if (!session || !/^\d+$/.test(saved.venueId)) throw new Error("OFFLINE");
+      const body = toVisitRequest(saved);
+      const remote = /^\d+$/.test(saved.id)
+        ? await venueApi.updateVisit(session, saved.venueId, saved.id, body)
+        : await venueApi.createVisit(session, saved.venueId, body);
+      setDb((current) => ({ ...current, visits: [remote, ...current.visits.filter((visit) => visit.id !== saved.id)] }));
+      localStorage.removeItem(DRAFT_KEY);
+      setDraft(null);
+      navigate("detail", saved.venueId);
+      setNotice("공유 DB에 암행투어 기록을 저장했어요.");
+    } catch {
+      localStorage.removeItem(DRAFT_KEY);
+      setDraft(null);
+      navigate("detail", saved.venueId);
+      setNotice("오프라인으로 저장했어요. 연결되면 공유 DB에 동기화됩니다.");
+    }
   }
 
   function exportBackup() {
@@ -228,6 +316,12 @@ export default function VenueTourApp() {
   }
 
   if (!hydrated) return <main className="loading-screen">Marry Mate를 준비하고 있어요…</main>;
+
+  if (!session) return <AuthScreen onAuthenticated={(next) => {
+    localStorage.setItem(AUTH_KEY, JSON.stringify(next));
+    setSession(next);
+    setNotice("Marry Mate에 로그인했어요.");
+  }} />;
 
   if (view === "tour" && draft && selectedVenue) {
     const score = fulfillment(draft.checklistItems);
@@ -330,10 +424,14 @@ export default function VenueTourApp() {
       <ModuleHeader onHome={() => navigate("home")} onExport={exportBackup} />
       {notice && <Toast text={notice} />}
       <section className="home-hero"><p className="eyebrow">VENUE TOUR</p><h1>내일의 웨딩홀,<br />오늘 꼼꼼히 기록해요.</h1><p>현장에서 확인한 사실과 내가 느낀 만족도를 나눠 남기고,<br />집에 돌아와 후회 없이 비교해보세요.</p></section>
+      <CollaborationCard session={session} workspaces={workspaces} syncing={syncing}
+        onSync={() => void syncFromServer(session, true)}
+        onSession={(next) => { localStorage.setItem(AUTH_KEY, JSON.stringify(next)); setSession(next); }}
+        onLogout={() => { localStorage.removeItem(AUTH_KEY); setSession(null); setWorkspaces([]); }} />
       {draft && db.venues.some((venue) => venue.id === draft.venueId) && <button className="resume-card" onClick={() => { const venue = db.venues.find((item) => item.id === draft.venueId); if (venue) startTour(venue); }}><span>작성 중인 암행투어</span><strong>{db.venues.find((venue) => venue.id === draft.venueId)?.name}</strong><i>{progressOf(draft).percent}% · 이어서 작성 →</i></button>}
       <section className="add-venue-card"><div><p className="card-kicker">NEW VENUE</p><h2>투어할 웨딩홀 추가</h2></div><label>웨딩홀 이름<input value={venueName} placeholder="예: 아펠가모 공덕" onChange={(event) => setVenueName(event.target.value)} onKeyDown={(event) => event.key === "Enter" && addVenue()} /></label><label>주소 <small>선택</small><input value={venueAddress} placeholder="현장에서 알아보기 쉽게 적어주세요" onChange={(event) => setVenueAddress(event.target.value)} /></label><button className="primary-button" onClick={addVenue}>웨딩홀 추가</button></section>
       <section className="venue-section"><div className="section-title"><h2>나의 웨딩홀</h2><button onClick={() => navigate("compare")} disabled={db.venues.length < 2}>비교하기 →</button></div>{db.venues.length === 0 ? <Empty text="첫 웨딩홀을 추가하면 암행투어를 시작할 수 있어요." /> : <div className="venue-list">{db.venues.map((venue) => { const visits = db.visits.filter((visit) => visit.venueId === venue.id); const latest = visits.sort((a, b) => b.savedAt.localeCompare(a.savedAt))[0]; return <article className="venue-card" key={venue.id}><button className="venue-card-main" onClick={() => navigate("detail", venue.id)}><span className="status-badge">{candidateLabel[venue.candidateStatus]}</span><h3>{venue.name}</h3><p>{venue.address || "주소 미입력"}</p><div><span>{visits.length}회 방문</span><strong>{latest?.finalAssessment.overallSatisfaction == null ? "평가 전" : `★ ${latest.finalAssessment.overallSatisfaction.toFixed(1)}`}</strong></div></button><button className="tour-button" onClick={() => startTour(venue)}>암행투어 시작 <span>→</span></button></article>; })}</div>}</section>
-      <footer><strong>marry mate</strong><span>내 기록은 현재 이 기기에 저장됩니다.</span></footer>
+      <footer><strong>marry mate</strong><span>작성 중에는 기기에, 완료하면 공유 DB에 안전하게 저장돼요.</span></footer>
     </main>
   );
 }
@@ -423,3 +521,69 @@ function ModuleHeader({ onHome, onExport }: { onHome: () => void; onExport: () =
 
 function Toast({ text }: { text: string }) { return <div className="toast" role="status">✓ {text}</div>; }
 function Empty({ text }: { text: string }) { return <div className="empty-state"><i>✦</i><p>{text}</p></div>; }
+
+function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: AuthSession) => void }) {
+  const [mode, setMode] = useState<"login" | "signup">("signup");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault(); setBusy(true); setError("");
+    try {
+      const result = mode === "signup"
+        ? await authApi.signup(email, password, nickname)
+        : await authApi.login(email, password);
+      onAuthenticated(result);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "로그인하지 못했어요.");
+    } finally { setBusy(false); }
+  }
+
+  return <main className="auth-shell">
+    <section className="auth-card">
+      <p className="eyebrow">COUPLE WORKSPACE</p>
+      <h1>둘이 함께 기록하는<br />웨딩홀 암행투어</h1>
+      <p>각자 로그인하고 초대 코드로 연결하면 같은 기록을 바로 확인할 수 있어요.</p>
+      <div className="auth-tabs"><button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>처음 시작하기</button><button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>로그인</button></div>
+      <form onSubmit={submit}>
+        {mode === "signup" && <label>닉네임<input value={nickname} onChange={(event) => setNickname(event.target.value)} placeholder="서로 알아볼 이름" required /></label>}
+        <label>이메일<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" required /></label>
+        <label>비밀번호<input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="8자 이상" required /></label>
+        {error && <p className="auth-error">{error}</p>}
+        <button className="primary-button" disabled={busy}>{busy ? "연결 중…" : mode === "signup" ? "우리 공간 만들기" : "로그인"}</button>
+      </form>
+    </section>
+  </main>;
+}
+
+function CollaborationCard({ session, workspaces, syncing, onSync, onSession, onLogout }: {
+  session: AuthSession; workspaces: Workspace[]; syncing: boolean; onSync: () => void;
+  onSession: (session: AuthSession) => void; onLogout: () => void;
+}) {
+  const [invite, setInvite] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [message, setMessage] = useState("");
+
+  async function createInvite() {
+    try { const result = await workspaceApi.createInvite(session); setInvite(result.inviteCode); setMessage("이 코드를 남자친구에게 보내주세요."); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "초대 코드를 만들지 못했어요."); }
+  }
+  async function join() {
+    try {
+      const joined = await workspaceApi.join(session, joinCode);
+      onSession({ ...session, workspaceId: joined.id }); setJoinCode(""); setMessage(`${joined.name}에 연결됐어요.`);
+    } catch (error) { setMessage(error instanceof Error ? error.message : "참가하지 못했어요."); }
+  }
+
+  return <section className="collaboration-card">
+    <div className="collaboration-head"><div><small>함께 준비 중</small><strong>{session.user.nickname}님</strong></div><button onClick={onSync}>{syncing ? "동기화 중…" : "새로고침"}</button></div>
+    {workspaces.length > 0 && <div className="workspace-pills">{workspaces.map((workspace) => <button className={workspace.id === session.workspaceId ? "active" : ""} key={workspace.id} onClick={() => onSession({ ...session, workspaceId: workspace.id })}>{workspace.name}</button>)}</div>}
+    <div className="invite-actions"><button onClick={createInvite}>초대 코드 만들기</button><span>또는</span><label><input value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="받은 초대 코드" /><button disabled={!joinCode.trim()} onClick={join}>참가</button></label></div>
+    {invite && <button className="invite-code" onClick={() => void navigator.clipboard?.writeText(invite)}><span>초대 코드</span><strong>{invite}</strong><small>눌러서 복사</small></button>}
+    {message && <p>{message}</p>}
+    <button className="logout-button" onClick={onLogout}>로그아웃</button>
+  </section>;
+}

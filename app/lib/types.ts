@@ -124,3 +124,11 @@ export type LocalDatabase = {
   venues: Venue[];
   visits: VenueVisit[];
 };
+
+export type AuthSession = {
+  token: string;
+  user: { id: number; email: string; nickname: string };
+  workspaceId: number | null;
+};
+
+export type Workspace = { id: number; name: string; role: "OWNER" | "MEMBER" };
