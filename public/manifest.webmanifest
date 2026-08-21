@@ -1,8 +1,8 @@
 {
-  "name": "Wedget 웨딩홀 암행투어",
-  "short_name": "Wedget",
-  "description": "웨딩홀 방문 평가와 체크리스트를 현장에서 기록하세요.",
-  "start_url": "/",
+  "name": "Marry Mate 웨딩 플래너",
+  "short_name": "Marry Mate",
+  "description": "웨딩홀부터 예산과 일정까지 함께 준비하는 웨딩 플래너.",
+  "start_url": "/venues",
   "display": "standalone",
   "background_color": "#f7f4ed",
   "theme_color": "#1f5b48",

@@ -1,5 +1,5 @@
-const CACHE = "wedget-shell-v1";
-const SHELL = ["/", "/manifest.webmanifest", "/favicon.svg"];
+const CACHE = "marrymate-shell-v2";
+const SHELL = ["/venues", "/manifest.webmanifest", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
@@ -17,5 +17,5 @@ self.addEventListener("fetch", (event) => {
     const copy = response.clone();
     caches.open(CACHE).then((cache) => cache.put(event.request, copy));
     return response;
-  }).catch(() => caches.match(event.request).then((cached) => cached || caches.match("/"))));
+  }).catch(() => caches.match(event.request).then((cached) => cached || caches.match("/venues"))));
 });

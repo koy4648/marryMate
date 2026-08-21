@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
+import AppFrame from "./components/AppFrame";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,13 +19,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "Wedget · 웨딩홀 암행투어";
-  const description = "웨딩홀 방문 평가와 체크리스트를 현장에서 기록하세요.";
+  const title = "Marry Mate · 함께 준비하는 웨딩 플래너";
+  const description = "웨딩홀부터 예산, 업체와 일정까지 한곳에서 준비하는 웨딩 플래너.";
   return {
     metadataBase: new URL(origin), title, description,
     manifest: "/manifest.webmanifest", themeColor: "#1f5b48",
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
-    openGraph: { title, description, type: "website", images: [{ url: `${origin}/og.png`, width: 1536, height: 1024, alt: "Wedget 웨딩홀 암행투어" }] },
+    openGraph: { title, description, type: "website", images: [{ url: `${origin}/og.png`, width: 1536, height: 1024, alt: "Marry Mate 웨딩 플래너" }] },
     twitter: { card: "summary_large_image", title, description, images: [`${origin}/og.png`] },
   };
 }
@@ -39,7 +40,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AppFrame>{children}</AppFrame>
       </body>
     </html>
   );
