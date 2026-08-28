@@ -4,11 +4,12 @@ import type {
 } from "./types";
 
 const configuredBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
+const productionBaseUrl = "https://marrymate-production.up.railway.app";
 
 function baseUrl() {
   if (configuredBaseUrl) return configuredBaseUrl;
   if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) return "http://localhost:8080";
-  return "";
+  return productionBaseUrl;
 }
 
 async function request<T>(path: string, init?: RequestInit, session?: AuthSession): Promise<T> {
