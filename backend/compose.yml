@@ -10,7 +10,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${MARRY_MATE_DB_ROOT_PASSWORD}
       TZ: UTC
     ports:
-      - "3306:3306"
+      # Local development access only. MySQL must never be exposed by the router.
+      - "127.0.0.1:${MARRY_MATE_DB_LOCAL_PORT:-3306}:3306"
     volumes:
       - marry_mate_mysql_data:/var/lib/mysql
     healthcheck:
@@ -28,6 +29,51 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: marry-mate-api
+    restart: unless-stopped
+    environment:
+      MARRY_MATE_DB_HOST: mysql
+      MARRY_MATE_DB_PORT: 3306
+      MARRY_MATE_DB_NAME: ${MARRY_MATE_DB_NAME}
+      MARRY_MATE_DB_USER: ${MARRY_MATE_DB_USER}
+      MARRY_MATE_DB_PASSWORD: ${MARRY_MATE_DB_PASSWORD}
+      MARRY_MATE_CORS_ORIGINS: ${MARRY_MATE_CORS_ORIGINS:-https://wedget-venue-tour.koy4648.chatgpt.site,http://localhost:3000,http://localhost:3001}
+      PORT: 8080
+    ports:
+      # Enables health checks from the Mac mini without exposing the API to the LAN.
+      - "127.0.0.1:${MARRY_MATE_API_LOCAL_PORT:-8080}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: marry-mate-tunnel
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      api:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
 
 volumes:
   marry_mate_mysql_data:

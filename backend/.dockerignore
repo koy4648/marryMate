@@ -2,5 +2,8 @@
 .gradle-local
 build
 .env
+.env.*
+!.env.example
 .idea
 *.iml
+compose.yml

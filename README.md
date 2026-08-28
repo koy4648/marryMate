@@ -10,6 +10,8 @@ Marry Mate는 웨딩홀 탐색부터 예산, 업체와 견적, 계약, 일정까
 
 구현 과정과 설계 판단, 트러블슈팅, 면접용 설명은 [DEVELOPMENT_LOG.md](./DEVELOPMENT_LOG.md)에 정리합니다.
 
+Mac mini에서 Backend와 MySQL을 운영하는 절차는 [SELF_HOSTING.md](./SELF_HOSTING.md)에 정리합니다.
+
 ## 해결하려는 문제
 
 결혼 준비 과정의 정보는 메신저, 메모장, 스프레드시트, 업체별 견적서와 커뮤니티 후기에 흩어지기 쉽습니다.
