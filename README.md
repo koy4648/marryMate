@@ -53,6 +53,21 @@ corepack pnpm dev
 - Backend: `http://localhost:8080`
 - Health: `http://localhost:8080/actuator/health`
 
+## 현재 공개 테스트 주소
+
+- Frontend: `https://marry-mate-together.koy4648.chatgpt.site`
+- API: Cloudflare Quick Tunnel 사용
+
+Quick Tunnel은 계정 없이 사용하는 임시 연결입니다. Mac mini와 아래 컨테이너가 계속 실행되어야 하며, Tunnel 컨테이너를 새로 만들면 API 주소가 변경될 수 있습니다.
+
+```bash
+docker compose --profile quick-tunnel up -d mysql api quick-tunnel
+docker compose ps
+docker compose logs --tail=50 quick-tunnel
+```
+
+정식 운영 시에는 Cloudflare 계정의 Named Tunnel 또는 별도 호스팅 서비스로 전환합니다.
+
 ## 검증
 
 ```bash
