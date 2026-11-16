@@ -2,7 +2,7 @@ export type PaymentType = 'DEPOSIT' | 'INTERIM' | 'BALANCE' | 'EXTRA' | 'REFUND'
 export type PaymentStatus = 'SCHEDULED' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED' | 'REFUNDED'
 
 export type Payment = {
-  id: string
+  id: string | number
   title: string
   category: string
   type: PaymentType

@@ -9,8 +9,11 @@ Marry Mate V2는 준비 항목, 후보 업체, 체크리스트, 견적, 계약, 
 - 새 V2 프로젝트 기반
 - Spring Boot 4, Java 21, MySQL, Flyway
 - React 19, TypeScript, Vite
-- 계약금·중도금·잔금 예산 도메인 초안
-- 모바일 우선 대시보드 골격
+- 이메일·비밀번호 회원가입과 로그인
+- Couple Workspace, 초대 코드와 멤버십 권한 검사
+- 공유 목표 예산과 계약금·중도금·잔금 저장
+- 결제 예정일과 결제 완료 처리
+- 모바일 우선 공동 예산 대시보드
 
 기존 프로토타입은 `feature/backend-rebuild` 브랜치의 `cf286f6` 커밋에 보존되어 있습니다.
 
@@ -59,11 +62,11 @@ cd frontend && corepack pnpm lint && corepack pnpm test && corepack pnpm build
 
 ## 개발 순서
 
-1. 프로젝트와 DB 기반
-2. 사용자 인증과 Couple Workspace
-3. 준비 항목과 후보 업체
-4. 체크리스트와 후기
-5. 견적과 업체 비교
-6. 예산·계약·결제
+1. 프로젝트와 DB 기반 — 완료
+2. 사용자 인증과 Couple Workspace — 완료
+3. 공동 예산과 결제 일정 — 1차 완료
+4. 준비 항목과 후보 업체
+5. 체크리스트와 후기
+6. 견적과 업체 비교
 7. 일정·할 일·첨부파일
 

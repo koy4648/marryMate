@@ -1,6 +1,8 @@
 spring:
   application:
     name: marry-mate-api
+  autoconfigure:
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
   config:
     import:
       - optional:file:.env[.properties]
