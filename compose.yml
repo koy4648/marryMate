@@ -20,6 +20,58 @@ services:
       retries: 12
       start_period: 20s
 
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: marry-mate-v2-api
+    restart: unless-stopped
+    environment:
+      MARRY_MATE_DB_HOST: mysql
+      MARRY_MATE_DB_PORT: 3306
+      MARRY_MATE_DB_NAME: ${MARRY_MATE_DB_NAME:-marry_mate}
+      MARRY_MATE_DB_USER: ${MARRY_MATE_DB_USER:-marry_mate}
+      MARRY_MATE_DB_PASSWORD: ${MARRY_MATE_DB_PASSWORD:-marry_mate_local}
+      MARRY_MATE_CORS_ORIGINS: ${MARRY_MATE_CORS_ORIGINS:-http://localhost:5173}
+      PORT: 8080
+    ports:
+      - "127.0.0.1:${MARRY_MATE_API_PORT:-8080}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: marry-mate-v2-tunnel
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      api:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  quick-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: marry-mate-v2-quick-tunnel
+    restart: unless-stopped
+    profiles: ["quick-tunnel"]
+    command: tunnel --no-autoupdate --url http://api:8080
+    depends_on:
+      api:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
 volumes:
   marry_mate_v2_mysql:
 
