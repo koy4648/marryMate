@@ -8,9 +8,9 @@ spring:
       - optional:file:.env[.properties]
       - optional:file:../.env[.properties]
   datasource:
-    url: jdbc:mysql://localhost:${MARRY_MATE_DB_PORT:3306}/${MARRY_MATE_DB_NAME:marry_mate}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${MARRY_MATE_DB_USER:marry_mate}
-    password: ${MARRY_MATE_DB_PASSWORD:marry_mate_local}
+    url: jdbc:mysql://${MARRY_MATE_DB_HOST:${MYSQLHOST:localhost}}:${MARRY_MATE_DB_PORT:${MYSQLPORT:3306}}/${MARRY_MATE_DB_NAME:${MYSQLDATABASE:marry_mate}}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${MARRY_MATE_DB_USER:${MYSQLUSER:marry_mate}}
+    password: ${MARRY_MATE_DB_PASSWORD:${MYSQLPASSWORD:marry_mate_local}}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-timeout: 3000
@@ -28,7 +28,7 @@ spring:
     locations: classpath:db/migration
 
 server:
-  port: ${MARRY_MATE_API_PORT:8080}
+  port: ${PORT:${MARRY_MATE_API_PORT:8080}}
 
 management:
   endpoints:
