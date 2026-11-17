@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Gowun+Batang:wght@400;700&family=Italianno&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
 
 :root { --ink:#24392b; --muted:#667468; --line:#d8dfd2; --paper:#fffdf4; --canvas:#f3f0e6; --rose:#4f7758; --rose-deep:#315c40; --rose-soft:#e8efe4; --sage:#6f8b69; --forest:#315c40; --cream:#fffaf0; --shadow:0 20px 55px rgba(46,75,53,.09); }
 * { box-sizing:border-box; }
@@ -14,6 +14,15 @@ a { color:inherit; text-decoration:none; }
 .brand-mark { width:42px; height:42px; display:grid; place-items:center; background:transparent; color:white; }
 .brand-mark svg { width:100%; height:100%; overflow:visible; stroke:currentColor; stroke-width:1.15; stroke-linecap:round; stroke-linejoin:round; }
 .brand-mark svg text { fill:currentColor; stroke:none; }
+.header-wordmark,.auth-wordmark { color:var(--cream); overflow:visible; stroke:currentColor; stroke-width:1.15; stroke-linecap:round; stroke-linejoin:round; }
+.header-wordmark .wordmark-text,.auth-wordmark .wordmark-text { fill:currentColor; stroke:none; font:78px 'Italianno','Cormorant Garamond',cursive; }
+.header-wordmark .wordmark-tagline,.auth-wordmark .wordmark-tagline { fill:currentColor; stroke:none; font:600 8px 'Noto Sans KR',sans-serif; letter-spacing:.28em; }
+.header-wordmark .wordmark-flower { opacity:.9; }
+.header-wordmark .wordmark-tail,.header-wordmark .wordmark-rule { opacity:.65; }
+.header-wordmark { width:190px; height:66px; }
+.mobile-brand-mark { display:none; width:42px; height:42px; color:var(--cream); }
+.mobile-brand-mark svg { width:100%; height:100%; stroke:currentColor; stroke-width:1.15; stroke-linecap:round; stroke-linejoin:round; }
+.mobile-brand-mark text { fill:currentColor; stroke:none; }
 .brand strong { display:block; font:21px 'DM Serif Display',serif; letter-spacing:.02em; }
 .brand small { display:block; color:var(--muted); font-size:10px; margin-top:1px; }
 .topbar nav { display:flex; align-self:stretch; gap:30px; }
@@ -383,8 +392,8 @@ main { padding-top:42px; }
 .auth-card::before,.auth-card::after { display:none; }
 .auth-brand,.auth-card>.eyebrow,.auth-card h1,.auth-card h1 em { color:var(--cream); }
 .auth-card>p:not(.eyebrow) { color:rgba(241,236,223,.7); }
-.auth-emblem { width:170px; height:148px; margin:0 auto -8px; color:var(--cream); stroke:rgba(241,236,223,.76); stroke-width:1.15; stroke-linecap:round; stroke-linejoin:round; }
-.auth-emblem text { fill:rgba(241,236,223,.92); stroke:none; }
+.auth-wordmark { display:block; width:min(390px,100%); height:auto; margin:-12px auto -2px; stroke:rgba(241,236,223,.78); }
+.auth-wordmark .wordmark-text,.auth-wordmark .wordmark-tagline { fill:var(--cream); }
 .auth-tabs { border-color:rgba(241,236,223,.36); border-radius:0; background:rgba(241,236,223,.08); }
 .auth-tabs button { border-radius:0; color:rgba(241,236,223,.62); }
 .auth-tabs button.active { background:var(--cream); color:var(--forest); }
@@ -419,6 +428,9 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
   .compare-section { padding:22px 16px; }
   .vendor-card { min-width:240px; }
   .auth-card { padding:32px 22px 38px; }
+  .header-wordmark { display:none; }
+  .mobile-brand-mark { display:block; }
+  .auth-wordmark { width:min(330px,100%); }
 }
 
 /* Budget insights */

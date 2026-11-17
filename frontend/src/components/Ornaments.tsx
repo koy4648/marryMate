@@ -34,15 +34,20 @@ export function MonogramMark({ className = '' }: OrnamentProps) {
   </svg>
 }
 
-export function MarryMateEmblem({ className = '' }: OrnamentProps) {
-  return <svg className={className} viewBox="0 0 240 190" fill="none" aria-hidden="true">
-    <ellipse cx="120" cy="91" rx="78" ry="71"/>
-    <ellipse cx="120" cy="91" rx="72" ry="65" opacity=".45"/>
-    <path d="M68 48c-14-9-25-6-32 8 15 5 27 2 32-8Zm104 0c14-9 25-6 32 8-15 5-27 2-32-8ZM52 70c-16-3-27 2-33 15 16 6 28 1 33-15Zm136 0c16-3 27 2 33 15-16 6-28 1-33-15Z"/>
-    <path d="M42 51c18 7 25 21 22 42M198 51c-18 7-25 21-22 42"/>
-    <text x="116" y="112" textAnchor="middle" fontFamily="Cormorant Garamond, serif" fontSize="62" fontStyle="italic" letterSpacing="-11">MM</text>
-    <path d="M101 137c7-10 13-10 19 0 6-10 12-10 19 0-6 8-12 13-19 17-7-4-13-9-19-17Z"/>
-    <path d="M81 164c17-5 30-5 39 0 9-5 22-5 39 0M120 154v20"/>
+export function WordmarkLogo({ className = '' }: OrnamentProps) {
+  return <svg className={className} viewBox="0 0 520 170" fill="none" aria-label="Marry Mate">
+    <g className="wordmark-flower">
+      <path d="M260 48c-21-18-22-37-2-43 18 10 20 28 2 43Zm0 0c21-18 40-16 43 4-13 16-31 14-43-4Zm0 0c-21-18-40-16-43 4 13 16 31 14 43-4Zm0 0c-9-24 0-41 19-37 12 17 4 32-19 37Zm0 0c9-24 0-41-19-37-12 17-4 32 19 37Z"/>
+      <path d="M260 47v19M249 39c5 7 12 7 22 0M260 38l-3-15M260 38l4-15"/>
+      <circle cx="260" cy="43" r="4"/>
+      <path d="M215 48c-39-25-75-18-109 14M305 48c39-25 75-18 109 14M116 56c-7-18-2-31 14-41M144 40c1-15 10-25 27-28M404 56c7-18 2-31-14-41M376 40c-1-15-10-25-27-28"/>
+      <path d="M130 15c-17-3-28 3-34 18 17 6 29 0 34-18ZM171 12c-13-9-25-8-36 3 12 12 25 11 36-3ZM390 15c17-3 28 3 34 18-17 6-29 0-34-18ZM349 12c13-9 25-8 36 3-12 12-25 11-36-3Z"/>
+      <path d="M105 62c-22-4-35 5-38 24 23 2 35-6 38-24ZM415 62c22-4 35 5 38 24-23 2-35-6-38-24Z"/>
+    </g>
+    <text className="wordmark-text" x="260" y="126" textAnchor="middle">Marry Mate</text>
+    <path className="wordmark-tail" d="M168 139c62 18 127 18 184 0M196 143c-22 14-45 13-63 2M324 143c22 14 45 13 63 2"/>
+    <path className="wordmark-rule" d="M70 157h130M320 157h130"/>
+    <text className="wordmark-tagline" x="260" y="163" textAnchor="middle">OUR WEDDING ARCHIVE</text>
   </svg>
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { FloralSwag, MarryMateEmblem, MonogramMark, SilkRibbon } from './components/Ornaments'
+import { FloralSwag, MonogramMark, SilkRibbon, WordmarkLogo } from './components/Ornaments'
 import { formatWon, getPaymentTiming, groupPaymentTotals, summarizePayments, type Payment, type PaymentType } from './features/budget/budget'
 import { calendarEvents, monthCells, planningProgress, reviewTypeLabel, statusLabel, type PlanningItem, type PlanningStatus, type ReviewType } from './features/planning/planning'
 import { preferredWorkspaceId, workspacePreferenceKey } from './features/workspace/workspace'
@@ -23,7 +23,7 @@ type View = 'dashboard' | 'checklist' | 'compare' | 'calendar' | 'budget'
 function Auth({ onDone }: { onDone: (session: Session) => void }) {
   const [mode,setMode]=useState<'signup'|'login'>('signup'); const [error,setError]=useState(''); const [busy,setBusy]=useState(false)
   async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError('');const form=new FormData(event.currentTarget);try{const session=mode==='signup'?await api.signup(String(form.get('email')),String(form.get('password')),String(form.get('nickname'))):await api.login(String(form.get('email')),String(form.get('password')));onDone(session)}catch(reason){setError(reason instanceof Error?reason.message:'로그인하지 못했어요.')}finally{setBusy(false)}}
-  return <main className="auth-page"><section className="auth-card"><div className="auth-brand"><span className="brand-mark"><MonogramMark/></span><span>marry mate</span></div><p className="eyebrow">OUR WEDDING ARCHIVE</p><MarryMateEmblem className="auth-emblem"/><h1>둘이 함께 쓰는<br /><em>결혼 준비 기록</em></h1><p>우리의 선택과 약속을 한곳에 차분히 모아두세요.</p><div className="auth-tabs"><button type="button" className={mode==='signup'?'active':''} onClick={()=>setMode('signup')}>처음 시작하기</button><button type="button" className={mode==='login'?'active':''} onClick={()=>setMode('login')}>로그인</button></div><form onSubmit={submit}>{mode==='signup'&&<label>닉네임<input name="nickname" required maxLength={80}/></label>}<label>이메일<input name="email" type="email" required/></label><label>비밀번호<input name="password" type="password" minLength={8} required/></label>{error&&<p className="form-error">{error}</p>}<button className="primary" disabled={busy}>{busy?'연결 중…':mode==='signup'?'우리 공간 만들기':'로그인'}</button></form></section></main>
+  return <main className="auth-page"><section className="auth-card"><WordmarkLogo className="auth-wordmark"/><h1>둘이 함께 쓰는<br /><em>결혼 준비 기록</em></h1><p>우리의 선택과 약속을 한곳에 차분히 모아두세요.</p><div className="auth-tabs"><button type="button" className={mode==='signup'?'active':''} onClick={()=>setMode('signup')}>처음 시작하기</button><button type="button" className={mode==='login'?'active':''} onClick={()=>setMode('login')}>로그인</button></div><form onSubmit={submit}>{mode==='signup'&&<label>닉네임<input name="nickname" required maxLength={80}/></label>}<label>이메일<input name="email" type="email" required/></label><label>비밀번호<input name="password" type="password" minLength={8} required/></label>{error&&<p className="form-error">{error}</p>}<button className="primary" disabled={busy}>{busy?'연결 중…':mode==='signup'?'우리 공간 만들기':'로그인'}</button></form></section></main>
 }
 
 function CompareStarter({ onStart, onClose }: { onStart:(group:string,item:string)=>void; onClose:()=>void }) {
@@ -82,7 +82,7 @@ function App() {
   const coupleName=workspaceName.replace(/의 결혼 준비$/,'')
   const nav: {id:View;label:string}[]=[{id:'dashboard',label:'홈'},{id:'checklist',label:'준비 체크'},{id:'compare',label:'업체 비교'},{id:'calendar',label:'캘린더'},{id:'budget',label:'예산'}]
   return <div className="app-shell">
-    <header className="topbar"><button className="brand brand-button" onClick={()=>setView('dashboard')}><span className="brand-mark"><MonogramMark/></span><span><strong>marry mate</strong><small>우리의 결혼 준비 공간</small></span></button><nav>{nav.map(item=><button key={item.id} className={view===item.id?'active':''} onClick={()=>setView(item.id)}>{item.label}</button>)}</nav><button className="couple-button" onClick={logout}>{session.user.nickname} · 로그아웃</button></header>
+    <header className="topbar"><button className="brand brand-button" onClick={()=>setView('dashboard')}><WordmarkLogo className="header-wordmark"/><span className="mobile-brand-mark"><MonogramMark/></span></button><nav>{nav.map(item=><button key={item.id} className={view===item.id?'active':''} onClick={()=>setView(item.id)}>{item.label}</button>)}</nav><button className="couple-button" onClick={logout}>{session.user.nickname} · 로그아웃</button></header>
     <main id="top">
       {notice&&<button className="notice" onClick={()=>setNotice('')}>{notice}<span>×</span></button>}
       {view==='dashboard'&&<>
