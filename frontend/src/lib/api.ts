@@ -41,6 +41,7 @@ export const api = {
   planningItems: (session: Session) => request<PlanningItem[]>('/api/v1/planning-items', {}, session),
   addPlanningItem: (session: Session, body: PlanningItemInput) => request<PlanningItem>('/api/v1/planning-items', { method: 'POST', body: JSON.stringify(body) }, session),
   updatePlanningItem: (session: Session, id: number, body: PlanningItemInput) => request<PlanningItem>(`/api/v1/planning-items/${id}`, { method: 'PUT', body: JSON.stringify(body) }, session),
+  selectPlanningItem: (session: Session, id: number) => request<PlanningItem[]>(`/api/v1/planning-items/${id}/select`, { method: 'POST' }, session),
   deletePlanningItem: (session: Session, id: number) => request<void>(`/api/v1/planning-items/${id}`, { method: 'DELETE' }, session),
 }
 

@@ -495,6 +495,22 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
 .compare-empty h2 { margin:0; font:400 27px 'Gowun Batang','Noto Sans KR',serif; }
 .compare-empty>p:not(.eyebrow) { margin:10px 0 22px; color:rgba(241,236,223,.62); font-size:10px; }
 .compare-empty .primary { background:var(--cream); color:var(--forest); }
+.vendor-card-content { width:100%; display:block; border:0; padding:0; background:none; color:inherit; text-align:left; }
+.vendor-card-content>small { display:block; margin-top:7px; color:var(--muted); font-size:9px; }
+.select-vendor { width:100%; margin-top:18px; border:1px solid var(--forest); padding:11px 12px; background:transparent; color:var(--forest); font-size:10px; font-weight:700; }
+.select-vendor:hover:not(:disabled) { background:var(--forest); color:var(--cream); }
+.select-vendor:disabled { border-color:#9da18b; background:#dfe1d4; color:var(--forest); cursor:default; }
+.vendor-card.is-selected { border-color:var(--forest); background:#e6e6da; }
+.contract-planner { width:min(820px,100%); max-height:calc(100vh - 32px); overflow:auto; padding:34px; border:1px solid #aebda9; background:var(--cream); box-shadow:0 30px 90px rgba(0,0,0,.34); }
+.contract-planner h2 { margin:0; color:var(--forest); font:400 27px 'Gowun Batang','Noto Sans KR',serif; }
+.contract-planner .section-heading p:last-child { margin:8px 0 0; color:var(--muted); font-size:10px; }
+.contract-planner form { display:grid; gap:20px; }
+.contract-planner label { display:grid; gap:7px; color:var(--ink); font-size:10px; font-weight:700; }
+.contract-planner input,.contract-planner select { width:100%; min-width:0; border:1px solid #c4d0c0; border-radius:0; padding:11px 12px; background:#fffef8; color:var(--ink); outline:none; }
+.contract-payment-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.contract-payment-grid fieldset { display:grid; gap:12px; margin:0; padding:16px; border:1px solid #c4c7b5; }
+.contract-payment-grid legend { padding:0 8px; color:var(--forest); font:700 14px 'Gowun Batang','Noto Sans KR',serif; }
+.contract-hint { margin:0; padding:12px 14px; background:#dfe1d4; color:var(--muted); font-size:9px; line-height:1.7; }
 
 @media (max-width:900px) {
   .budget-insights { grid-template-columns:1fr; }
@@ -514,5 +530,7 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
   .compare-starter { grid-template-columns:1fr; padding:22px 18px; }
   .compare-starter>div:first-child,.compare-starter-actions { grid-column:auto; }
   .compare-empty { min-height:330px; padding:32px 20px; }
+  .contract-planner { padding:26px 18px; }
+  .contract-payment-grid { grid-template-columns:1fr; }
 }
 

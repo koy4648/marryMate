@@ -60,6 +60,16 @@ public class PlanningService {
         items.delete(find(workspaceId, itemId));
     }
 
+    @Transactional
+    public List<ItemView> selectCandidate(Long workspaceId, Long userId, Long itemId) {
+        workspaces.requireMember(workspaceId, userId);
+        PlanningItem selected = find(workspaceId, itemId);
+        items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(workspaceId).stream()
+            .filter(item -> item.getServiceGroup().equals(selected.getServiceGroup()) && item.getItemName().equals(selected.getItemName()))
+            .forEach(item -> { if (item.getId().equals(selected.getId())) item.contract(); else item.skip(); });
+        return views(workspaceId);
+    }
+
     private void apply(PlanningItem item, ChangeItem command) {
         BigDecimal quote = command.quotedAmount() == null ? BigDecimal.ZERO : command.quotedAmount();
         BigDecimal actual = command.actualAmount() == null ? BigDecimal.ZERO : command.actualAmount();

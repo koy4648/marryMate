@@ -20,6 +20,7 @@ public class PlanningController {
     @GetMapping List<PlanningService.ItemView> list(@RequestHeader("X-Workspace-Id") Long workspaceId, @AuthenticationPrincipal CurrentUser user) { return service.list(workspaceId, user.id()); }
     @PostMapping @ResponseStatus(HttpStatus.CREATED) PlanningService.ItemView create(@RequestHeader("X-Workspace-Id") Long workspaceId, @AuthenticationPrincipal CurrentUser user, @Valid @RequestBody ItemRequest request) { return service.create(workspaceId, user.id(), request.command()); }
     @PutMapping("/{itemId}") PlanningService.ItemView update(@RequestHeader("X-Workspace-Id") Long workspaceId, @AuthenticationPrincipal CurrentUser user, @PathVariable Long itemId, @Valid @RequestBody ItemRequest request) { return service.update(workspaceId, user.id(), itemId, request.command()); }
+    @PostMapping("/{itemId}/select") List<PlanningService.ItemView> select(@RequestHeader("X-Workspace-Id") Long workspaceId, @AuthenticationPrincipal CurrentUser user, @PathVariable Long itemId) { return service.selectCandidate(workspaceId, user.id(), itemId); }
     @DeleteMapping("/{itemId}") @ResponseStatus(HttpStatus.NO_CONTENT) void delete(@RequestHeader("X-Workspace-Id") Long workspaceId, @AuthenticationPrincipal CurrentUser user, @PathVariable Long itemId) { service.delete(workspaceId, user.id(), itemId); }
 
     record ItemRequest(@NotBlank @Size(max=80) String serviceGroup, @NotBlank @Size(max=120) String itemName,

@@ -64,6 +64,9 @@ public class PlanningItem {
         this.updatedAt = Instant.now();
     }
 
+    public void contract() { this.status = "CONTRACTED"; this.updatedAt = Instant.now(); }
+    public void skip() { this.status = "SKIPPED"; this.updatedAt = Instant.now(); }
+
     private static String value(String value) { return value == null ? "" : value.trim(); }
     public Long getId() { return id; }
     public String getServiceGroup() { return serviceGroup; }
