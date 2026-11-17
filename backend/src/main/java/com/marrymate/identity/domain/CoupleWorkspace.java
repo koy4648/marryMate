@@ -15,5 +15,6 @@ public class CoupleWorkspace {
     public CoupleWorkspace(String name) { this.name = name; this.createdAt = Instant.now(); this.updatedAt = this.createdAt; }
     public Long getId() { return id; }
     public String getName() { return name; }
+    public void rename(String name) { this.name = name.trim(); this.updatedAt = Instant.now(); }
 }
 

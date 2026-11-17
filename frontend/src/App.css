@@ -147,6 +147,7 @@ footer strong { color:var(--ink); font:18px 'DM Serif Display',serif; }
 .notice { margin-bottom:18px; padding:12px 16px; border-radius:12px; background:#e7efe6; color:#506850; font-size:11px; }
 .workspace-card { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center; padding:20px 24px; border:1px solid var(--line); border-radius:17px; background:var(--paper); }
 .workspace-card strong { font:20px 'DM Serif Display','Noto Sans KR',serif; }
+.workspace-member-name { display:block; margin-top:5px; color:var(--muted); font-size:9px; }
 .workspace-actions { display:flex; gap:8px; }
 .workspace-picker { display:flex!important; align-items:center; gap:8px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:white; color:var(--muted); font-size:9px; }
 .workspace-picker select { max-width:180px; border:0; background:white; color:var(--ink); font-size:10px; outline:none; }
@@ -452,6 +453,19 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
 .payment-stage-grid article>div>div { height:3px; background:rgba(241,236,223,.2); }
 .payment-stage-grid article>div>div i { display:block; height:100%; background:var(--cream); }
 .payment-form select { min-width:0; border:1px solid #c4d0c0; border-radius:4px; padding:11px 12px; background:#fffef8; color:var(--ink); outline:none; }
+.identity-editor { width:min(500px,100%); max-height:calc(100vh - 32px); overflow:auto; padding:36px; border:1px solid #aebda9; background:var(--cream); box-shadow:0 30px 90px rgba(0,0,0,.34); }
+.identity-editor h2 { margin:0; font:400 28px 'Gowun Batang','Noto Sans KR',serif; color:var(--forest); }
+.identity-editor form { display:grid; gap:20px; }
+.identity-editor label { display:grid; gap:7px; color:var(--ink); font-size:11px; font-weight:700; }
+.identity-editor input { width:100%; border:1px solid #c4d0c0; border-radius:0; padding:13px 14px; background:#fffef8; color:var(--ink); outline:none; }
+.identity-editor input:focus { border-color:var(--forest); box-shadow:0 0 0 3px rgba(79,119,88,.12); }
+.identity-editor label small,.readonly-workspace small { color:var(--muted); font-size:8px; font-weight:400; }
+.readonly-workspace { display:grid; gap:7px; padding:16px; border:1px solid #c4d0c0; }
+.readonly-workspace span { font-size:10px; font-weight:700; }
+.readonly-workspace strong { color:var(--forest); font:400 18px 'Gowun Batang','Noto Sans KR',serif; }
+.identity-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:5px; }
+.identity-actions button { min-height:44px; }
+.workspace-card .workspace-member-name { color:rgba(241,236,223,.6); }
 
 @media (max-width:900px) {
   .budget-insights { grid-template-columns:1fr; }
@@ -465,5 +479,6 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
   .bar-row>b { grid-column:2; grid-row:1; }
   .payment-stage-grid { grid-template-columns:1fr; gap:8px; margin-top:10px; }
   .payment-stage-grid article { min-height:125px; grid-template-columns:44px 1fr; }
+  .identity-editor { padding:28px 20px; }
 }
 

@@ -33,6 +33,7 @@ public class AuthService {
         return issue(user, workspaceId);
     }
     @Transactional public void logout(String rawToken) { sessions.deleteByTokenHash(tokens.hash(rawToken)); }
+    @Transactional public UserView rename(Long userId, String nickname) { User user=users.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"사용자를 찾지 못했습니다.")); user.rename(nickname); return new UserView(user.getId(),user.getEmail(),user.getNickname()); }
     private SessionView issue(User user, Long workspaceId) { String raw = tokens.create(); sessions.save(new AuthSession(user.getId(), tokens.hash(raw))); return new SessionView(raw, new UserView(user.getId(), user.getEmail(), user.getNickname()), workspaceId); }
     public record UserView(Long id, String email, String nickname) {}
     public record SessionView(String token, UserView user, Long workspaceId) {}
