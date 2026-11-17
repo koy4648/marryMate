@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getPaymentTiming, summarizePayments, type Payment } from './budget'
+import { getPaymentTiming, groupPaymentTotals, summarizePayments, type Payment } from './budget'
 
 const payments: Payment[] = [
   { id: '1', title: '계약금', category: '웨딩홀', type: 'DEPOSIT', scheduledAmount: 100, actualAmount: 100, dueDate: '2026-11-01', paidDate: '2026-11-01', payer: '공동', status: 'PAID' },
@@ -14,6 +14,15 @@ describe('payment budget', () => {
 
   it('marks payments due within seven days', () => {
     expect(getPaymentTiming(payments[1], '2026-11-16')).toEqual({ label: 'D-4', tone: 'warning' })
+  })
+
+  it('groups scheduled, paid, and remaining money for charts', () => {
+    expect(groupPaymentTotals(payments, payment => payment.category)).toEqual([
+      { name: '웨딩홀', scheduled: 600, paid: 150, remaining: 450, count: 3 },
+    ])
+    expect(groupPaymentTotals(payments, payment => payment.payer)).toEqual([
+      { name: '공동', scheduled: 600, paid: 150, remaining: 450, count: 3 },
+    ])
   })
 
   it('marks overdue payments', () => {

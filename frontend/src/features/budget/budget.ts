@@ -14,6 +14,14 @@ export type Payment = {
   status: PaymentStatus
 }
 
+export type PaymentGroupTotal = {
+  name: string
+  scheduled: number
+  paid: number
+  remaining: number
+  count: number
+}
+
 export function summarizePayments(payments: Payment[]) {
   return payments.reduce((summary, payment) => {
     if (payment.status === 'CANCELLED') return summary
@@ -29,6 +37,28 @@ export function summarizePayments(payments: Payment[]) {
     else summary.pendingCount += 1
     return summary
   }, { paid: 0, remaining: 0, paidCount: 0, pendingCount: 0 })
+}
+
+export function groupPaymentTotals(payments: Payment[], key: (payment: Payment) => string) {
+  const grouped = new Map<string, PaymentGroupTotal>()
+
+  payments.forEach(payment => {
+    if (payment.status === 'CANCELLED') return
+    const name = key(payment) || '기타'
+    const current = grouped.get(name) ?? { name, scheduled: 0, paid: 0, remaining: 0, count: 0 }
+    if (payment.status === 'REFUNDED' || payment.type === 'REFUND') {
+      current.paid -= payment.actualAmount
+    } else {
+      const paid = Math.min(payment.actualAmount, payment.scheduledAmount)
+      current.scheduled += payment.scheduledAmount
+      current.paid += paid
+      current.remaining += Math.max(payment.scheduledAmount - paid, 0)
+      current.count += 1
+    }
+    grouped.set(name, current)
+  })
+
+  return [...grouped.values()].sort((a, b) => b.scheduled - a.scheduled || a.name.localeCompare(b.name, 'ko'))
 }
 
 export function getPaymentTiming(payment: Payment, today: string) {
