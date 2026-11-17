@@ -403,7 +403,7 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
   .workspace-stamp { position:absolute; }
   .hero { min-height:0; gap:34px; padding:46px 22px 30px; background-position:63% center; }
   .hero::before { left:22px; top:24px; }
-  .hero h1 { font-size:37px; }
+  .hero h1 { font-size:32px; line-height:1.28; letter-spacing:-.065em; }
   .hero-progress { width:min(280px,100%); align-self:center; padding-top:86px; }
   .hero-note { margin-left:0; }
   .metric-grid { gap:8px; }
