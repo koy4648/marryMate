@@ -140,6 +140,38 @@ footer strong { color:var(--ink); font:18px 'DM Serif Display',serif; }
 .modal-backdrop { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:24px; background:rgba(45,36,39,.58); backdrop-filter:blur(5px); }.item-editor { width:min(820px,100%); max-height:92vh; overflow:auto; border-radius:22px; padding:28px; background:var(--paper); box-shadow:0 30px 100px rgba(30,20,23,.3); }.icon-button { width:36px; height:36px; border:1px solid var(--line); border-radius:50%; background:white; color:var(--muted); font-size:20px; }
 .item-editor label { display:grid; gap:6px; color:var(--muted); font-size:9px; }.item-editor input,.item-editor select,.item-editor textarea { width:100%; border:1px solid var(--line); border-radius:10px; padding:10px 11px; background:white; color:var(--ink); font:inherit; font-size:11px; outline:none; }.item-editor textarea { min-height:72px; resize:vertical; }.item-editor input:focus,.item-editor select:focus,.item-editor textarea:focus { border-color:var(--rose); box-shadow:0 0 0 3px var(--rose-soft); }
 .editor-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:13px; }.review-box { display:grid; gap:13px; margin-top:20px; padding:19px; border-radius:15px; background:#faf5f3; }.review-box h3 { margin:0; font:19px 'DM Serif Display','Noto Sans KR',serif; }.editor-actions { display:grid; grid-template-columns:auto 1fr auto auto; gap:9px; margin-top:20px; }.secondary,.danger-button { border:1px solid var(--line); border-radius:11px; padding:11px 16px; background:white; color:var(--ink); font-size:10px; }.danger-button { color:#b84949; }
+.unknown-date { display:flex!important; grid-template-columns:none!important; flex-direction:row!important; align-items:center; gap:8px!important; }
+.unknown-date input { width:auto!important; margin:0; }
+.wedding-dday { display:inline-flex; align-items:baseline; gap:10px; margin:12px 0 0; color:#fffdf4; font:600 18px 'Cormorant Garamond','Gowun Batang',serif; letter-spacing:.06em; }
+.wedding-dday small { color:#d9e3d5; font:10px 'Noto Sans KR',sans-serif; letter-spacing:.02em; }
+.venue-base-memo { margin-top:18px; }
+.venue-review-guide { margin:18px 0 0; padding:15px; border:1px dashed #9eb09a; border-radius:5px; background:#eef2e9; color:#5f715f; font-size:10px; line-height:1.7; }
+.venue-review-panel { margin-top:26px; padding-top:24px; border-top:1px solid #bdcbb9; }
+.venue-review-heading { display:flex; justify-content:space-between; gap:16px; align-items:start; }
+.venue-review-heading h3 { margin:0; color:var(--forest); font:22px 'Gowun Batang','Noto Sans KR',serif; }
+.venue-review-heading p { margin:5px 0 0; color:var(--muted); font-size:10px; }
+.venue-review-list { display:grid; gap:10px; margin-top:15px; }
+.venue-review-list article { padding:16px; border:1px solid #c8d3c4; border-radius:5px; background:#fffef8; }
+.venue-review-list header { display:flex; align-items:center; gap:10px; }
+.venue-review-list header span { padding:4px 8px; border-radius:999px; background:#e5ede1; color:var(--forest); font-size:9px; font-weight:700; }
+.venue-review-list header time { color:var(--muted); font-size:9px; }
+.venue-review-list article>p { margin:11px 0; font-size:11px; line-height:1.65; white-space:pre-wrap; }
+.venue-review-list dl { display:grid; grid-template-columns:repeat(3,1fr); margin:10px 0; border:1px solid #d9dfd5; }
+.venue-review-list dl div { padding:9px; border-right:1px solid #d9dfd5; }.venue-review-list dl div:last-child { border:0; }
+.venue-review-list dt { color:var(--muted); font-size:8px; }.venue-review-list dd { margin:3px 0 0; font-size:10px; font-weight:700; }
+.venue-review-list article>small,.venue-review-list article>strong { display:block; margin-top:7px; font-size:9px; line-height:1.6; }
+.same-day-benefit { color:#c33f3f!important; font-weight:800; }
+.venue-review-list footer { display:flex; justify-content:flex-end; gap:7px; margin-top:12px; }
+.venue-review-list footer button { border:1px solid var(--line); border-radius:5px; padding:6px 9px; background:white; color:var(--muted); font-size:8px; }
+.venue-review-form { display:grid; gap:13px; margin-top:16px; padding:18px; border:1px solid #aebda9; border-radius:5px; background:#f3f3e9; }
+.consultation-quote { display:grid; gap:13px; padding:15px; border:1px solid #dcc3b8; border-radius:5px; background:#fff9f5; }
+.benefit-field { color:#a93434!important; font-weight:700; }.benefit-field textarea { border-color:#dca2a2!important; }
+.venue-review-preview { display:grid; gap:8px; margin-top:13px; text-align:left; }
+.venue-review-preview>div { padding-top:9px; border-top:1px solid #d7ded3; }
+.venue-review-preview span { color:var(--forest); font-size:8px; font-weight:800; }
+.venue-review-preview p { display:-webkit-box; overflow:hidden; margin:5px 0; color:var(--ink); font-size:9px; line-height:1.5; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.venue-review-preview small,.venue-review-preview strong { display:block; margin-top:4px; font-size:8px; line-height:1.45; }
+.venue-preview-empty { margin:13px 0 0; padding-top:9px; border-top:1px solid #d7ded3; color:var(--muted); font-size:9px; }
 .auth-page { min-height:100vh; display:grid; place-items:center; padding:32px 18px; background:radial-gradient(circle at top,#f8eaea 0,transparent 38%),var(--canvas); }
 .auth-card { width:min(440px,100%); padding:42px; border:1px solid var(--line); border-radius:28px; background:var(--paper); box-shadow:var(--shadow); }
 .auth-card>.brand-mark { margin-bottom:25px; }
@@ -532,5 +564,10 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
   .compare-empty { min-height:330px; padding:32px 20px; }
   .contract-planner { padding:26px 18px; }
   .contract-payment-grid { grid-template-columns:1fr; }
+  .venue-review-heading { align-items:center; }
+  .venue-review-list dl { grid-template-columns:1fr; }
+  .venue-review-list dl div { border-right:0; border-bottom:1px solid #d9dfd5; }
+  .venue-review-list dl div:last-child { border-bottom:0; }
+  .venue-review-form .editor-grid { grid-template-columns:1fr; }
 }
 

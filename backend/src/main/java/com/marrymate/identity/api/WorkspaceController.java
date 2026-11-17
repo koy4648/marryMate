@@ -1,6 +1,7 @@
 package com.marrymate.identity.api;
 
 import java.util.List;
+import java.time.LocalDate;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -15,8 +16,8 @@ public class WorkspaceController {
     @GetMapping List<WorkspaceService.WorkspaceView> list(@AuthenticationPrincipal CurrentUser user){return service.list(user.id());}
     @PostMapping("/{workspaceId}/invites") WorkspaceService.InviteView invite(@PathVariable Long workspaceId,@AuthenticationPrincipal CurrentUser user){return service.invite(workspaceId,user.id());}
     @PostMapping("/join") WorkspaceService.WorkspaceView join(@RequestBody JoinRequest request,@AuthenticationPrincipal CurrentUser user){return service.join(user.id(),request.inviteCode());}
-    @PatchMapping("/{workspaceId}") WorkspaceService.WorkspaceView rename(@PathVariable Long workspaceId,@AuthenticationPrincipal CurrentUser user,@Valid @RequestBody RenameRequest request){return service.rename(workspaceId,user.id(),request.name());}
+    @PatchMapping("/{workspaceId}") WorkspaceService.WorkspaceView rename(@PathVariable Long workspaceId,@AuthenticationPrincipal CurrentUser user,@Valid @RequestBody RenameRequest request){return service.rename(workspaceId,user.id(),request.name(),request.weddingDate());}
     record JoinRequest(String inviteCode){}
-    record RenameRequest(@NotBlank @Size(max=120) String name){}
+    record RenameRequest(@NotBlank @Size(max=120) String name,LocalDate weddingDate){}
 }
 

@@ -1,5 +1,6 @@
 package com.marrymate.identity.application;
 
+import java.time.LocalDate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,11 +19,11 @@ public class AuthService {
     public AuthService(UserRepository users, WorkspaceRepository workspaces, WorkspaceMemberRepository members, AuthSessionRepository sessions, BudgetPlanRepository budgets, PasswordEncoder passwords, TokenCodec tokens) {
         this.users=users; this.workspaces=workspaces; this.members=members; this.sessions=sessions; this.budgets=budgets; this.passwords=passwords; this.tokens=tokens;
     }
-    @Transactional public SessionView signup(String email, String password, String nickname) {
+    @Transactional public SessionView signup(String email, String password, String nickname, LocalDate weddingDate) {
         String normalized = email.trim().toLowerCase();
         if (users.existsByEmail(normalized)) throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
         User user = users.save(new User(normalized, passwords.encode(password), nickname));
-        CoupleWorkspace workspace = workspaces.save(new CoupleWorkspace(nickname.trim() + "의 결혼 준비"));
+        CoupleWorkspace workspace = workspaces.save(new CoupleWorkspace(nickname.trim() + "의 결혼 준비",weddingDate));
         members.save(new WorkspaceMember(workspace.getId(), user.getId(), "OWNER")); budgets.save(new BudgetPlan(workspace.getId()));
         return issue(user, workspace.getId());
     }

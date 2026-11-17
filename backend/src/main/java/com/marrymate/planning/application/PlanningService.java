@@ -22,7 +22,10 @@ public class PlanningService {
         new Template("스튜디오", "드레스"), new Template("스튜디오", "예복"),
         new Template("본식", "헬퍼"), new Template("본식", "헤어·메이크업"), new Template("본식", "드레스"),
         new Template("본식", "예복"), new Template("본식", "혼주 한복"), new Template("본식", "아버지 예복"),
-        new Template("본식", "혼주 헤어·메이크업")
+        new Template("본식", "혼주 헤어·메이크업"), new Template("스드메", "스드메 패키지"),
+        new Template("신혼여행", "항공권"), new Template("신혼여행", "숙소"), new Template("신혼여행", "투어·티켓"),
+        new Template("신혼여행", "여권·비자"), new Template("신혼여행", "여행자보험"), new Template("신혼여행", "공항 이동"),
+        new Template("신혼여행", "유심·eSIM"), new Template("신혼여행", "환전·결제수단"), new Template("신혼여행", "짐 싸기")
     );
 
     private final PlanningItemRepository items;
