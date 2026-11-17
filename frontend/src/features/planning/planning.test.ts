@@ -3,7 +3,8 @@ import { calendarEvents, monthCells, planningProgress, type PlanningItem } from 
 
 const item = (status: PlanningItem['status'], scheduleDate: string | null = null): PlanningItem => ({
   id: Math.random(), serviceGroup: '본식', itemName: '드레스', vendorName: '', status, scheduleDate,
-  quotedAmount: 0, actualAmount: 0, rating: null, reviewType: 'NONE', review: '', pros: '', cons: '', memo: '',
+  quotedAmount: 0, actualAmount: 0, packageContract: false, packageBaseAmount: 0, packageAdditionalAmount: 0,
+  packageIncludedItems: '', packageAdditionalDetails: '', rating: null, reviewType: 'NONE', review: '', pros: '', cons: '', memo: '',
 })
 
 describe('planning helpers', () => {

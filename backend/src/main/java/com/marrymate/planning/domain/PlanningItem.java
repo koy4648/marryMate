@@ -17,6 +17,11 @@ public class PlanningItem {
     @Column(name = "schedule_date") private LocalDate scheduleDate;
     @Column(name = "quoted_amount", nullable = false, precision = 15, scale = 0) private BigDecimal quotedAmount;
     @Column(name = "actual_amount", nullable = false, precision = 15, scale = 0) private BigDecimal actualAmount;
+    @Column(name = "package_contract", nullable = false) private boolean packageContract;
+    @Column(name = "package_base_amount", nullable = false, precision = 15, scale = 0) private BigDecimal packageBaseAmount;
+    @Column(name = "package_additional_amount", nullable = false, precision = 15, scale = 0) private BigDecimal packageAdditionalAmount;
+    @Column(name = "package_included_items", nullable = false, length = 2000) private String packageIncludedItems;
+    @Column(name = "package_additional_details", nullable = false, length = 2000) private String packageAdditionalDetails;
     private Integer rating;
     @Column(name = "review_type", nullable = false, length = 30) private String reviewType;
     @Column(nullable = false, columnDefinition = "TEXT") private String review;
@@ -36,6 +41,11 @@ public class PlanningItem {
         this.status = "TODO";
         this.quotedAmount = BigDecimal.ZERO;
         this.actualAmount = BigDecimal.ZERO;
+        this.packageContract = false;
+        this.packageBaseAmount = BigDecimal.ZERO;
+        this.packageAdditionalAmount = BigDecimal.ZERO;
+        this.packageIncludedItems = "";
+        this.packageAdditionalDetails = "";
         this.reviewType = "NONE";
         this.review = "";
         this.pros = "";
@@ -47,13 +57,20 @@ public class PlanningItem {
 
     public void change(String serviceGroup, String itemName, String vendorName, String status,
                        LocalDate scheduleDate, BigDecimal quotedAmount, BigDecimal actualAmount,
+                       boolean packageContract, BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount,
+                       String packageIncludedItems, String packageAdditionalDetails,
                        Integer rating, String reviewType, String review, String pros, String cons, String memo) {
         this.serviceGroup = serviceGroup;
         this.itemName = itemName;
         this.vendorName = value(vendorName);
         this.status = status;
         this.scheduleDate = scheduleDate;
-        this.quotedAmount = quotedAmount == null ? BigDecimal.ZERO : quotedAmount;
+        this.packageContract = packageContract;
+        this.packageBaseAmount = packageContract && packageBaseAmount != null ? packageBaseAmount : BigDecimal.ZERO;
+        this.packageAdditionalAmount = packageContract && packageAdditionalAmount != null ? packageAdditionalAmount : BigDecimal.ZERO;
+        this.packageIncludedItems = packageContract ? value(packageIncludedItems) : "";
+        this.packageAdditionalDetails = packageContract ? value(packageAdditionalDetails) : "";
+        this.quotedAmount = packageContract ? this.packageBaseAmount.add(this.packageAdditionalAmount) : quotedAmount == null ? BigDecimal.ZERO : quotedAmount;
         this.actualAmount = actualAmount == null ? BigDecimal.ZERO : actualAmount;
         this.rating = rating;
         this.reviewType = value(reviewType).isBlank() ? "NONE" : reviewType;
@@ -76,6 +93,11 @@ public class PlanningItem {
     public LocalDate getScheduleDate() { return scheduleDate; }
     public BigDecimal getQuotedAmount() { return quotedAmount; }
     public BigDecimal getActualAmount() { return actualAmount; }
+    public boolean isPackageContract() { return packageContract; }
+    public BigDecimal getPackageBaseAmount() { return packageBaseAmount; }
+    public BigDecimal getPackageAdditionalAmount() { return packageAdditionalAmount; }
+    public String getPackageIncludedItems() { return packageIncludedItems; }
+    public String getPackageAdditionalDetails() { return packageAdditionalDetails; }
     public Integer getRating() { return rating; }
     public String getReviewType() { return reviewType; }
     public String getReview() { return review; }

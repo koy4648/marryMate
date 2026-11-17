@@ -76,9 +76,12 @@ public class PlanningService {
     private void apply(PlanningItem item, ChangeItem command) {
         BigDecimal quote = command.quotedAmount() == null ? BigDecimal.ZERO : command.quotedAmount();
         BigDecimal actual = command.actualAmount() == null ? BigDecimal.ZERO : command.actualAmount();
-        if (quote.signum() < 0 || actual.signum() < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "금액은 0원 이상이어야 합니다.");
+        BigDecimal packageBase = command.packageBaseAmount() == null ? BigDecimal.ZERO : command.packageBaseAmount();
+        BigDecimal packageAdditional = command.packageAdditionalAmount() == null ? BigDecimal.ZERO : command.packageAdditionalAmount();
+        if (quote.signum() < 0 || actual.signum() < 0 || packageBase.signum() < 0 || packageAdditional.signum() < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "금액은 0원 이상이어야 합니다.");
         item.change(command.serviceGroup(), command.itemName(), command.vendorName(), command.status(), command.scheduleDate(),
-            quote, actual, command.rating(), command.reviewType(), command.review(), command.pros(), command.cons(), command.memo());
+            quote, actual, command.packageContract(), packageBase, packageAdditional, command.packageIncludedItems(),
+            command.packageAdditionalDetails(), command.rating(), command.reviewType(), command.review(), command.pros(), command.cons(), command.memo());
     }
 
     private PlanningItem find(Long workspaceId, Long itemId) {
@@ -89,13 +92,19 @@ public class PlanningService {
 
     private record Template(String group, String name) {}
     public record ChangeItem(String serviceGroup, String itemName, String vendorName, String status, LocalDate scheduleDate,
-                             BigDecimal quotedAmount, BigDecimal actualAmount, Integer rating, String reviewType,
+                             BigDecimal quotedAmount, BigDecimal actualAmount, boolean packageContract,
+                             BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount, String packageIncludedItems,
+                             String packageAdditionalDetails, Integer rating, String reviewType,
                              String review, String pros, String cons, String memo) {}
     public record ItemView(Long id, String serviceGroup, String itemName, String vendorName, String status,
                            LocalDate scheduleDate, BigDecimal quotedAmount, BigDecimal actualAmount, Integer rating,
-                           String reviewType, String review, String pros, String cons, String memo) {
+                           boolean packageContract, BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount,
+                           String packageIncludedItems, String packageAdditionalDetails, String reviewType,
+                           String review, String pros, String cons, String memo) {
         static ItemView from(PlanningItem item) { return new ItemView(item.getId(), item.getServiceGroup(), item.getItemName(),
             item.getVendorName(), item.getStatus(), item.getScheduleDate(), item.getQuotedAmount(), item.getActualAmount(),
-            item.getRating(), item.getReviewType(), item.getReview(), item.getPros(), item.getCons(), item.getMemo()); }
+            item.getRating(), item.isPackageContract(), item.getPackageBaseAmount(), item.getPackageAdditionalAmount(),
+            item.getPackageIncludedItems(), item.getPackageAdditionalDetails(), item.getReviewType(), item.getReview(),
+            item.getPros(), item.getCons(), item.getMemo()); }
     }
 }

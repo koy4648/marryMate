@@ -12,6 +12,11 @@ export type PlanningItem = {
   scheduleDate: string | null
   quotedAmount: number
   actualAmount: number
+  packageContract: boolean
+  packageBaseAmount: number
+  packageAdditionalAmount: number
+  packageIncludedItems: string
+  packageAdditionalDetails: string
   rating: number | null
   reviewType: ReviewType
   review: string

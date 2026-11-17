@@ -26,9 +26,12 @@ public class PlanningController {
     record ItemRequest(@NotBlank @Size(max=80) String serviceGroup, @NotBlank @Size(max=120) String itemName,
         @Size(max=160) String vendorName, @Pattern(regexp="TODO|RESEARCHING|SCHEDULED|CONTRACTED|DONE|SKIPPED") String status,
         LocalDate scheduleDate, @PositiveOrZero BigDecimal quotedAmount, @PositiveOrZero BigDecimal actualAmount,
+        boolean packageContract, @PositiveOrZero BigDecimal packageBaseAmount, @PositiveOrZero BigDecimal packageAdditionalAmount,
+        @Size(max=2000) String packageIncludedItems, @Size(max=2000) String packageAdditionalDetails,
         @Min(1) @Max(5) Integer rating, @Pattern(regexp="NONE|SECRET_TOUR|CONSULTATION|GUEST_TOUR|GENERAL") String reviewType,
         @Size(max=10000) String review, @Size(max=1000) String pros, @Size(max=1000) String cons, @Size(max=1000) String memo) {
         PlanningService.ChangeItem command() { return new PlanningService.ChangeItem(serviceGroup, itemName, vendorName, status,
-            scheduleDate, quotedAmount, actualAmount, rating, reviewType, review, pros, cons, memo); }
+            scheduleDate, quotedAmount, actualAmount, packageContract, packageBaseAmount, packageAdditionalAmount,
+            packageIncludedItems, packageAdditionalDetails, rating, reviewType, review, pros, cons, memo); }
     }
 }
