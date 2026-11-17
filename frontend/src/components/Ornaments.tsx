@@ -26,13 +26,40 @@ export function RibbonMark({ className = '' }: OrnamentProps) {
   </svg>
 }
 
-export function BotanicalCrest({ className = '' }: OrnamentProps) {
-  return <svg className={className} viewBox="0 0 360 150" fill="none" aria-hidden="true">
-    <path d="M20 132C62 123 69 87 112 73c31-10 51 1 68 20M340 132c-42-9-49-45-92-59-31-10-51 1-68 20"/>
-    <path d="M49 120c-11-19-9-38 8-55M70 104c-7-18-3-34 13-48M96 85c-2-18 6-31 23-40M311 120c11-19 9-38-8-55M290 104c7-18 3-34-13-48M264 85c2-18-6-31-23-40"/>
-    <path d="M57 65c-16-2-27 4-32 18 17 4 28-2 32-18ZM82 57c-13-8-25-7-35 3 12 11 25 10 35-3ZM118 45c-8-13-20-18-33-12 7 15 19 19 33 12ZM303 65c16-2 27 4 32 18-17 4-28-2-32-18ZM278 57c13-8 25-7 35 3-12 11-25 10-35-3ZM242 45c8-13 20-18 33-12-7 15-19 19-33 12Z"/>
-    <path d="M72 105c-15 2-24 11-25 25 17 0 25-8 25-25ZM103 79c-15 0-25 8-29 21 16 3 26-4 29-21ZM288 105c15 2 24 11 25 25-17 0-25-8-25-25ZM257 79c15 0 25 8 29 21-16 3-26-4-29-21Z"/>
-    <path d="M152 94c8-18 20-18 28 0 8-18 20-18 28 0-5 17-14 28-28 37-14-9-23-20-28-37Z"/>
-    <path d="M180 45v35M170 55h20"/>
+export function MonogramMark({ className = '' }: OrnamentProps) {
+  return <svg className={className} viewBox="0 0 64 64" fill="none" aria-hidden="true">
+    <ellipse cx="32" cy="32" rx="27" ry="28"/>
+    <text x="31" y="41" textAnchor="middle" fontFamily="Cormorant Garamond, serif" fontSize="26" fontStyle="italic" letterSpacing="-5">MM</text>
+    <path d="M13 49c7-4 13-3 19 2 6-5 13-6 20-2"/>
+  </svg>
+}
+
+export function MarryMateEmblem({ className = '' }: OrnamentProps) {
+  return <svg className={className} viewBox="0 0 240 190" fill="none" aria-hidden="true">
+    <ellipse cx="120" cy="91" rx="78" ry="71"/>
+    <ellipse cx="120" cy="91" rx="72" ry="65" opacity=".45"/>
+    <path d="M68 48c-14-9-25-6-32 8 15 5 27 2 32-8Zm104 0c14-9 25-6 32 8-15 5-27 2-32-8ZM52 70c-16-3-27 2-33 15 16 6 28 1 33-15Zm136 0c16-3 27 2 33 15-16 6-28 1-33-15Z"/>
+    <path d="M42 51c18 7 25 21 22 42M198 51c-18 7-25 21-22 42"/>
+    <text x="116" y="112" textAnchor="middle" fontFamily="Cormorant Garamond, serif" fontSize="62" fontStyle="italic" letterSpacing="-11">MM</text>
+    <path d="M101 137c7-10 13-10 19 0 6-10 12-10 19 0-6 8-12 13-19 17-7-4-13-9-19-17Z"/>
+    <path d="M81 164c17-5 30-5 39 0 9-5 22-5 39 0M120 154v20"/>
+  </svg>
+}
+
+export function FloralSwag({ className = '' }: OrnamentProps) {
+  return <svg className={className} viewBox="0 0 360 110" fill="none" aria-hidden="true">
+    <path d="M20 89c64 1 83-57 145-38 27 8 48 34 78 25 28-8 45-34 97-35"/>
+    <path d="M67 78c-8-20-3-36 15-49M92 60c-2-17 7-30 25-38M260 71c3-17 15-28 34-33M289 57c7-15 19-23 36-23"/>
+    <path d="M82 29c-17-5-30 1-37 16 18 7 31 1 37-16ZM117 22c-10-13-23-17-38-10 9 16 22 19 38 10ZM294 38c-16-5-29 0-37 14 17 8 30 3 37-14ZM325 34c-9-13-21-17-35-11 8 15 20 19 35 11Z"/>
+    <path d="M155 49c-4-14 2-25 16-30 13 7 17 18 10 31-8 8-17 8-26-1Zm33 9c1-15 10-23 25-24 10 10 10 22 0 32-11 5-19 2-25-8Z"/>
+    <circle cx="174" cy="45" r="4"/><circle cx="207" cy="53" r="4"/>
+  </svg>
+}
+
+export function SilkRibbon({ className = '' }: OrnamentProps) {
+  return <svg className={className} viewBox="0 0 360 80" fill="none" aria-hidden="true">
+    <path d="M16 43c52-30 103-23 153 4 49 27 102 22 175-14"/>
+    <path d="M169 47c-19-21-42-12-31 3 9 12 23 5 31-3Zm0 0c18-24 42-17 33-1-8 13-23 8-33 1ZM169 47c-7 9-11 18-12 28M169 47c9 8 15 17 18 27"/>
+    <path d="M42 33c9-12 20-15 33-9M286 44c11 8 23 8 35 1"/>
   </svg>
 }
