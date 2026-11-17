@@ -16,6 +16,11 @@ describe('payment budget', () => {
     expect(getPaymentTiming(payments[1], '2026-11-16')).toEqual({ label: 'D-4', tone: 'warning' })
   })
 
+  it('uses clear Korean labels for completed and same-day payments', () => {
+    expect(getPaymentTiming(payments[0], '2026-11-16')).toEqual({ label: '납입 완료', tone: 'done' })
+    expect(getPaymentTiming({ ...payments[2], dueDate: '2026-11-16' }, '2026-11-16')).toEqual({ label: '오늘 납입', tone: 'danger' })
+  })
+
   it('groups scheduled, paid, and remaining money for charts', () => {
     expect(groupPaymentTotals(payments, payment => payment.category)).toEqual([
       { name: '웨딩홀', scheduled: 600, paid: 150, remaining: 450, count: 3 },

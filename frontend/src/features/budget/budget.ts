@@ -62,7 +62,7 @@ export function groupPaymentTotals(payments: Payment[], key: (payment: Payment) 
 }
 
 export function getPaymentTiming(payment: Payment, today: string) {
-  if (payment.status === 'PAID') return { label: '결제 완료', tone: 'done' }
+  if (payment.status === 'PAID') return { label: '납입 완료', tone: 'done' }
   if (payment.status === 'CANCELLED') return { label: '취소', tone: 'muted' }
 
   const day = 86_400_000
@@ -71,7 +71,7 @@ export function getPaymentTiming(payment: Payment, today: string) {
   const days = Math.round((dueAt - todayAt) / day)
 
   if (days < 0) return { label: `${Math.abs(days)}일 지남`, tone: 'danger' }
-  if (days === 0) return { label: '오늘 결제', tone: 'danger' }
+  if (days === 0) return { label: '오늘 납입', tone: 'danger' }
   if (days <= 7) return { label: `D-${days}`, tone: 'warning' }
   return { label: `D-${days}`, tone: 'neutral' }
 }
