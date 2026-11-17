@@ -1,10 +1,12 @@
 import type { Payment, PaymentType } from '../features/budget/budget'
+import type { PlanningItem } from '../features/planning/planning'
 
 const API = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
 export type Session = { token: string; user: { id: number; email: string; nickname: string }; workspaceId: number | null }
 export type Workspace = { id: number; name: string; role: 'OWNER' | 'MEMBER' }
 export type Budget = { targetAmount: number; payments: Payment[] }
+export type PlanningItemInput = Omit<PlanningItem, 'id'>
 
 async function request<T>(path: string, init: RequestInit = {}, session?: Session): Promise<T> {
   const response = await fetch(`${API}${path}`, {
@@ -34,5 +36,9 @@ export const api = {
   target: (session: Session, targetAmount: number) => request<Budget>('/api/v1/budget', { method: 'PUT', body: JSON.stringify({ targetAmount }) }, session),
   addPayment: (session: Session, body: { category: string; title: string; type: PaymentType; scheduledAmount: number; dueDate: string; payer: string; memo: string }) => request<Payment>('/api/v1/budget/payments', { method: 'POST', body: JSON.stringify(body) }, session),
   completePayment: (session: Session, id: string | number, actualAmount: number, paidDate: string) => request<Payment>(`/api/v1/budget/payments/${id}/complete`, { method: 'PATCH', body: JSON.stringify({ actualAmount, paidDate }) }, session),
+  planningItems: (session: Session) => request<PlanningItem[]>('/api/v1/planning-items', {}, session),
+  addPlanningItem: (session: Session, body: PlanningItemInput) => request<PlanningItem>('/api/v1/planning-items', { method: 'POST', body: JSON.stringify(body) }, session),
+  updatePlanningItem: (session: Session, id: number, body: PlanningItemInput) => request<PlanningItem>(`/api/v1/planning-items/${id}`, { method: 'PUT', body: JSON.stringify(body) }, session),
+  deletePlanningItem: (session: Session, id: number) => request<void>(`/api/v1/planning-items/${id}`, { method: 'DELETE' }, session),
 }
 
