@@ -148,6 +148,8 @@ footer strong { color:var(--ink); font:18px 'DM Serif Display',serif; }
 .workspace-card { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center; padding:20px 24px; border:1px solid var(--line); border-radius:17px; background:var(--paper); }
 .workspace-card strong { font:20px 'DM Serif Display','Noto Sans KR',serif; }
 .workspace-actions { display:flex; gap:8px; }
+.workspace-picker { display:flex!important; align-items:center; gap:8px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:white; color:var(--muted); font-size:9px; }
+.workspace-picker select { max-width:180px; border:0; background:white; color:var(--ink); font-size:10px; outline:none; }
 .workspace-actions>button,.workspace-actions label button { border:1px solid var(--line); border-radius:10px; padding:9px 12px; background:white; color:var(--rose-deep); font-size:10px; font-weight:700; }
 .workspace-actions label { display:flex; }
 .workspace-actions input { width:130px; border-radius:10px 0 0 10px; font-size:10px; }
