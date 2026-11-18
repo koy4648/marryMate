@@ -17,6 +17,11 @@ describe('shared estimates', () => {
     expect(budgetEstimates(bookings,[],[],true,true)).toHaveLength(3)
     expect(budgetEstimates(bookings,[],[],false)).toEqual([])
   })
+  it('adds separate meal gatherings and family gifts without merging equal names',()=>{
+    const meals=[item(1,{serviceGroup:'식사',itemName:'청첩장 모임',status:'CONTRACTED',quotedAmount:300000}),item(2,{serviceGroup:'식사',itemName:'청첩장 모임',status:'CONTRACTED',quotedAmount:400000}),item(3,{serviceGroup:'식사',itemName:'상견례 선물',status:'CONTRACTED',quotedAmount:100000})]
+    expect(budgetEstimates(meals,[],[],true)).toHaveLength(3)
+    expect(budgetEstimates(meals,[],[],true).reduce((sum,entry)=>sum+entry.planned,0)).toBe(800000)
+  })
   it('accepts an exact won amount and displays comma grouping', () => {
     expect(parseWon('3,200,800')).toBe(3200800)
     expect(formatWon(parseWon('3200800'))).toBe('3,200,800원')

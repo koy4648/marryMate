@@ -78,7 +78,7 @@ public class PlanningService {
     public List<ItemView> selectCandidate(Long workspaceId, Long userId, Long itemId) {
         workspaces.requireMember(workspaceId, userId);
         PlanningItem selected = find(workspaceId, itemId);
-        if(selected.isPackageContract() || ("신혼여행".equals(selected.getServiceGroup()) && "숙소".equals(selected.getItemName()))) selected.contract();
+        if(selected.isPackageContract() || "식사".equals(selected.getServiceGroup()) || ("신혼여행".equals(selected.getServiceGroup()) && "숙소".equals(selected.getItemName()))) selected.contract();
         else items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(workspaceId).stream()
             .filter(item -> item.getPackageParentId()==null && item.getServiceGroup().equals(selected.getServiceGroup()) && item.getItemName().equals(selected.getItemName()))
             .forEach(item -> { if (item.getId().equals(selected.getId())) item.contract(); else item.skip(); });

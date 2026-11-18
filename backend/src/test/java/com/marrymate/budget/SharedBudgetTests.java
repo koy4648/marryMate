@@ -326,6 +326,19 @@ class SharedBudgetTests {
         assertEquals(6,budgets.get(workspaceId,userId).payments().size());
         assertEquals(0,new BigDecimal("3000000").compareTo(budgets.get(workspaceId,userId).payments().stream().map(BudgetService.PaymentView::scheduledAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
     }
+    @Test void separateInvitationMealsKeepTheirOwnReservationsAndPlannedPayers() {
+        var first=planning.create(workspaceId,userId,new PlanningService.ChangeItem("식사","청첩장 모임","친구 모임 식당","RESEARCHING",day,new BigDecimal("300000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","친구 6명",null,null,BigDecimal.ZERO,"",null));
+        var second=planning.create(workspaceId,userId,new PlanningService.ChangeItem("식사","청첩장 모임","동료 모임 식당","RESEARCHING",day.plusDays(7),new BigDecimal("300000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","동료 5명",null,null,BigDecimal.ZERO,"",null));
+        planning.selectCandidate(workspaceId,userId,first.id());
+        planning.selectCandidate(workspaceId,userId,second.id());
+        var schedule=List.of(new BudgetService.ContractStage("DEPOSIT",BigDecimal.ZERO,null,false,null,"미정"),new BudgetService.ContractStage("INTERIM",BigDecimal.ZERO,null,false,null,"미정"),new BudgetService.ContractStage("BALANCE",new BigDecimal("300000"),day,false,null,"신랑"));
+        budgets.contract(workspaceId,userId,first.id(),schedule);
+        budgets.contract(workspaceId,userId,second.id(),schedule);
+        var all=planning.list(workspaceId,userId);
+        assertEquals(2,all.stream().filter(item->"식사".equals(item.serviceGroup())&&"CONTRACTED".equals(item.status())).count());
+        assertEquals(2,budgets.get(workspaceId,userId).payments().size());
+        assertTrue(budgets.get(workspaceId,userId).payments().stream().allMatch(payment->"신랑".equals(payment.payer())));
+    }
     @Test void unrelatedUserCannotChangeContractPayments() {
         var item=contract(); var other=auth.signup(UUID.randomUUID()+"@test.local","test-password","다른 사용자");
         assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,other.user().id(),item.getId(),stages(day)));
