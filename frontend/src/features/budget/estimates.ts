@@ -27,7 +27,7 @@ export function budgetEstimates(items: PlanningItem[], reviews: VenueReview[], p
   const includedKeys = new Set(items.filter(item => packageFor(item, items)).map(item => `${item.serviceGroup}|${item.itemName}`))
   const groups = new Map<string, PlanningItem[]>()
   items.filter(item => (confirmedOnly ? item.status === 'CONTRACTED' : item.status !== 'SKIPPED') && !packageFor(item, items) && (item.packageContract || !includedKeys.has(`${item.serviceGroup}|${item.itemName}`) || ['CONTRACTED','DONE'].includes(item.status)) && (includeHoneymoon || item.serviceGroup !== '신혼여행')).forEach(item => {
-    const key = confirmedOnly || item.packageContract ? `package-${item.id}` : `${item.serviceGroup}|${item.itemName}`
+    const key = confirmedOnly || item.packageContract || (item.serviceGroup === '신혼여행' && item.itemName === '숙소') ? `package-${item.id}` : `${item.serviceGroup}|${item.itemName}`
     groups.set(key, [...groups.get(key) ?? [], item])
   })
   return [...groups.values()].flatMap(candidates => {

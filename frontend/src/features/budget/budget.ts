@@ -82,6 +82,11 @@ export function formatWon(amount: number) {
 }
 
 
+export function paymentAmountLabel({paid,remaining}:{paid:number;remaining:number}) {
+  return [paid!==0?`납부 ${formatWon(paid)}`:'',remaining!==0?`남음 ${formatWon(remaining)}`:''].filter(Boolean).join(' · ')
+}
+
+
 export function parseWon(value: string) {
   const digits = value.replaceAll(',', '')
   if (!/^\d{1,15}$/.test(digits)) throw new Error('원 단위의 금액을 입력해 주세요.')

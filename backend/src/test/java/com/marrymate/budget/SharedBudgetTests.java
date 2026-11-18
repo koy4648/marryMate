@@ -312,6 +312,20 @@ class SharedBudgetTests {
         assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,userId,id,installments,null,invalid));
         assertEquals(0,new BigDecimal("70000").compareTo(items.findById(id).orElseThrow().getVenueMealPrice()));
     }
+    @Test void confirmingThreeHoneymoonHotelsPreservesEveryBookingAndPayment() {
+        var ids=new java.util.ArrayList<Long>();
+        for(int i=1;i<=3;i++) {
+            var hotel=planning.create(workspaceId,userId,new PlanningService.ChangeItem("신혼여행","숙소","호텔 "+i,"RESEARCHING",null,new BigDecimal("1000000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",null,null,BigDecimal.ZERO,"",null));
+            ids.add(hotel.id());
+            planning.selectCandidate(workspaceId,userId,hotel.id());
+            var schedule=List.of(new BudgetService.ContractStage("DEPOSIT",new BigDecimal("100000"),day,true,day,"신부"),new BudgetService.ContractStage("INTERIM",BigDecimal.ZERO,null,false,null,"미정"),new BudgetService.ContractStage("BALANCE",new BigDecimal("900000"),day.plusMonths(1),false,null,"미정"));
+            budgets.contract(workspaceId,userId,hotel.id(),schedule);
+        }
+        var all=planning.list(workspaceId,userId);
+        assertEquals(3,all.stream().filter(item->ids.contains(item.id())&&"CONTRACTED".equals(item.status())).count());
+        assertEquals(6,budgets.get(workspaceId,userId).payments().size());
+        assertEquals(0,new BigDecimal("3000000").compareTo(budgets.get(workspaceId,userId).payments().stream().map(BudgetService.PaymentView::scheduledAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
+    }
     @Test void unrelatedUserCannotChangeContractPayments() {
         var item=contract(); var other=auth.signup(UUID.randomUUID()+"@test.local","test-password","다른 사용자");
         assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,other.user().id(),item.getId(),stages(day)));

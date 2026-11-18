@@ -10,6 +10,13 @@ const item = (id: number, change: Partial<PlanningItem> = {}): PlanningItem => (
 const payment: Payment = { id: 1, planningItemId: 1, title: '계약금', category: '스튜디오 촬영', type: 'DEPOSIT', scheduledAmount: 320080, actualAmount: 320080, dueDate: '2026-11-20', paidDate: '2026-11-18', payer: '공동', status: 'PAID' }
 
 describe('shared estimates', () => {
+  it('counts three honeymoon accommodation bookings separately in every budget view',()=>{
+    const bookings=[item(1,{serviceGroup:'신혼여행',itemName:'숙소',status:'CONTRACTED',quotedAmount:561850}),item(2,{serviceGroup:'신혼여행',itemName:'숙소',status:'CONTRACTED',quotedAmount:928592}),item(3,{serviceGroup:'신혼여행',itemName:'숙소',status:'CONTRACTED',quotedAmount:1380000})]
+    expect(budgetEstimates(bookings,[],[],true).map(entry=>entry.item.id)).toEqual([1,2,3])
+    expect(budgetEstimates(bookings,[],[],true).reduce((sum,entry)=>sum+entry.planned,0)).toBe(2870442)
+    expect(budgetEstimates(bookings,[],[],true,true)).toHaveLength(3)
+    expect(budgetEstimates(bookings,[],[],false)).toEqual([])
+  })
   it('accepts an exact won amount and displays comma grouping', () => {
     expect(parseWon('3,200,800')).toBe(3200800)
     expect(formatWon(parseWon('3200800'))).toBe('3,200,800원')
