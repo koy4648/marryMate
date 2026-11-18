@@ -1,6 +1,6 @@
 import type { PlanningItem } from '../planning/planning'
 import type { VenueReview } from '../../lib/api'
-import { summarizePayments, type Payment } from './budget'
+import { groupPaymentTotals, summarizePayments, type Payment } from './budget'
 
 export function itemExtra(item: PlanningItem) {
   return item.extraAmount ?? (item.packageContract ? item.packageAdditionalAmount??0 : 0)
@@ -57,4 +57,17 @@ export function contractPayments(items: PlanningItem[], payments: Payment[]) {
     const contract = packageFor(item, items) ?? item
     return contract.status === 'CONTRACTED'
   })
+}
+
+// Resolve saved payments through their package link, including older generic categories.
+export function categoryPaymentTotals(payments: Payment[], items: PlanningItem[]) {
+  const labels = new Map<string, string>()
+  const totals = groupPaymentTotals(payments, payment => {
+    const item = items.find(item => item.id === payment.planningItemId)
+    const parent = item && (item.packageContract ? item : packageFor(item, items))
+    const key = parent ? `package:${parent.id}` : `category:${payment.category}`
+    labels.set(key, parent ? `${parent.itemName}${parent.vendorName ? ` · ${parent.vendorName}` : ''}` : payment.category)
+    return key
+  })
+  return totals.map(total => ({...total, key: total.name, name: labels.get(total.name) ?? total.name}))
 }

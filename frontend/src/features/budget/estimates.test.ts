@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { budgetEstimates, packageFor, itemQuote, contractPayments, contractBaseAmount } from './estimates'
+import { budgetEstimates, packageFor, itemQuote, contractPayments, contractBaseAmount, categoryPaymentTotals } from './estimates'
 import { formatWon, parseWon, type Payment } from './budget'
 import type { PlanningItem } from '../planning/planning'
 const item = (id: number, change: Partial<PlanningItem> = {}): PlanningItem => ({
@@ -114,5 +114,25 @@ describe('revised contract totals', () => {
     const parent=item(1,{packageContract:true,packageBaseAmount:3300800,packageAdditionalAmount:20000,quotedAmount:3320800})
     expect(contractBaseAmount(parent)).toBe(3300800)
     expect(itemQuote(parent,[])).toBe(3320800)
+  })
+})
+
+describe('package chart categories', () => {
+  it('separates studio and ceremony packages and rolls child extras into the right package', () => {
+    const studio=item(1,{itemName:'스드메 패키지',vendorName:'다이렉트 웨딩',packageContract:true,status:'CONTRACTED'})
+    const ceremony=item(2,{itemName:'본식촬영 패키지',packageContract:true,status:'CONTRACTED'})
+    const helper=item(3,{packageParentId:1})
+    const payments=[{...payment,category:'패키지',scheduledAmount:100,actualAmount:100},{...payment,id:2,planningItemId:2,category:'패키지',scheduledAmount:200,actualAmount:0,status:'SCHEDULED' as const},{...payment,id:3,planningItemId:3,type:'EXTRA' as const,category:'패키지',scheduledAmount:30,actualAmount:0,status:'SCHEDULED' as const},{...payment,id:4,planningItemId:3,scheduledAmount:30,actualAmount:0,status:'CANCELLED' as const}]
+    const totals=categoryPaymentTotals(payments,[studio,ceremony,helper])
+    expect(totals).toHaveLength(2)
+    expect(totals.find(total=>total.key==='package:1')).toMatchObject({name:'스드메 패키지 · 다이렉트 웨딩',scheduled:130,paid:100,remaining:30})
+    expect(totals.find(total=>total.key==='package:2')).toMatchObject({scheduled:200,paid:0,remaining:200})
+  })
+  it('keeps different contracts separate even when their display names match and preserves standalone categories', () => {
+    const first=item(1,{packageContract:true,itemName:'패키지',vendorName:'업체'})
+    const second=item(2,{...first,id:2})
+    const totals=categoryPaymentTotals([payment,{...payment,id:2,planningItemId:2},{...payment,id:3,planningItemId:null,category:'웨딩홀'}],[first,second])
+    expect(totals.map(total=>total.key).sort()).toEqual(['category:웨딩홀','package:1','package:2'])
+    expect(totals.reduce((sum,total)=>sum+total.scheduled,0)).toBe(payment.scheduledAmount*3)
   })
 })
