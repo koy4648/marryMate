@@ -22,6 +22,14 @@ public class Payment {
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
 
+    @Column(name="planning_item_id") private Long planningItemId;
+    public Long getPlanningItemId() { return planningItemId; }
+    public void linkPlanningItem(Long id) { planningItemId=id; }
+    public void revise(BigDecimal amount, LocalDate date, String payer, boolean paid, LocalDate paidDate) {
+        scheduledAmount=amount; dueDate=date; this.payer=payer;
+        actualAmount=paid ? amount : BigDecimal.ZERO; this.paidDate=paid ? paidDate : null;
+        status=paid ? "PAID" : "SCHEDULED"; updatedAt=Instant.now();
+    }
     protected Payment() {}
     public Payment(Long workspaceId, String category, String title, String type, BigDecimal scheduledAmount, LocalDate dueDate, String payer, String memo) {
         this.workspaceId = workspaceId; this.category = category; this.title = title; this.type = type; this.status = "SCHEDULED";

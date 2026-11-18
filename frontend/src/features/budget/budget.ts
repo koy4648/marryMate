@@ -2,6 +2,7 @@ export type PaymentType = 'DEPOSIT' | 'INTERIM' | 'BALANCE' | 'EXTRA' | 'REFUND'
 export type PaymentStatus = 'SCHEDULED' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED' | 'REFUNDED'
 
 export type Payment = {
+  planningItemId?: number | null
   id: string | number
   title: string
   category: string
@@ -80,3 +81,9 @@ export function formatWon(amount: number) {
   return `${Math.round(amount).toLocaleString('ko-KR')}원`
 }
 
+
+export function parseWon(value: string) {
+  const digits = value.replaceAll(',', '')
+  if (!/^\d{1,15}$/.test(digits)) throw new Error('원 단위의 금액을 입력해 주세요.')
+  return Number(digits)
+}

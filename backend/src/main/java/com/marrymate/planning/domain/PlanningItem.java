@@ -31,6 +31,9 @@ public class PlanningItem {
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
 
+    @Column(name="package_parent_id") private Long packageParentId;
+    public Long getPackageParentId() { return packageParentId; }
+    public void linkPackage(Long id) { packageParentId=id; }
     protected PlanningItem() {}
 
     public PlanningItem(Long workspaceId, String serviceGroup, String itemName) {
@@ -85,6 +88,7 @@ public class PlanningItem {
     public void skip() { this.status = "SKIPPED"; this.updatedAt = Instant.now(); }
 
     private static String value(String value) { return value == null ? "" : value.trim(); }
+    public Long getWorkspaceId() { return workspaceId; }
     public Long getId() { return id; }
     public String getServiceGroup() { return serviceGroup; }
     public String getItemName() { return itemName; }

@@ -4,8 +4,8 @@ import type { PlanningItem } from '../features/planning/planning'
 const API = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
 export type Session = { token: string; user: { id: number; email: string; nickname: string }; workspaceId: number | null }
-export type Workspace = { id: number; name: string; role: 'OWNER' | 'MEMBER'; weddingDate: string | null }
-export type Budget = { targetAmount: number; payments: Payment[] }
+export type Workspace = { id: number; name: string; role: 'OWNER' | 'MEMBER'; weddingDate: string | null; homeTitle: string; homeMessage: string }
+export type Budget = { targetAmount: number; payments: Payment[]; includeHoneymoon: boolean; includeGifts: boolean; giftAmount: number }
 export type PlanningItemInput = Omit<PlanningItem, 'id'>
 export type VenueReview = { id:number; planningItemId:number; reviewType:'SECRET_TOUR'|'CONSULTATION'|'GUEST_TOUR'; visitedDate:string|null; content:string; pros:string; cons:string; mealPrice:number; minimumGuarantee:number; rentalFee:number; serviceItems:string; sameDayBenefits:string }
 export type VenueReviewInput = Omit<VenueReview,'id'>
@@ -33,11 +33,13 @@ export const api = {
   login: (email: string, password: string) => request<Session>('/api/v1/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   updateProfile: (session: Session, nickname: string) => request<Session['user']>('/api/v1/auth/me', { method: 'PATCH', body: JSON.stringify({ nickname }) }, session),
   workspaces: (session: Session) => request<Workspace[]>('/api/v1/workspaces', {}, session),
-  renameWorkspace: (session: Session, workspaceId: number, name: string, weddingDate: string | null) => request<Workspace>(`/api/v1/workspaces/${workspaceId}`, { method: 'PATCH', body: JSON.stringify({ name, weddingDate }) }, session),
+  renameWorkspace: (session: Session, workspaceId: number, name: string, weddingDate: string | null, homeTitle: string, homeMessage: string) => request<Workspace>(`/api/v1/workspaces/${workspaceId}`, { method: 'PATCH', body: JSON.stringify({ name, weddingDate, homeTitle, homeMessage }) }, session),
   invite: (session: Session) => request<{ inviteCode: string }> (`/api/v1/workspaces/${session.workspaceId}/invites`, { method: 'POST' }, session),
   join: (session: Session, inviteCode: string) => request<Workspace>('/api/v1/workspaces/join', { method: 'POST', body: JSON.stringify({ inviteCode }) }, session),
   budget: (session: Session) => request<Budget>('/api/v1/budget', {}, session),
   target: (session: Session, targetAmount: number) => request<Budget>('/api/v1/budget', { method: 'PUT', body: JSON.stringify({ targetAmount }) }, session),
+  preferences: (session: Session, body: { includeHoneymoon: boolean; includeGifts: boolean; giftAmount: number }) => request<Budget>('/api/v1/budget/preferences', { method: 'PUT', body: JSON.stringify(body) }, session),
+  contract: (session: Session, id: number, stages: { type: PaymentType; amount: number; date: string | null; paid: boolean; paidDate: string | null; payer: string }[]) => request<Budget>(`/api/v1/budget/contracts/${id}`, { method: 'PUT', body: JSON.stringify({ stages }) }, session),
   addPayment: (session: Session, body: { category: string; title: string; type: PaymentType; scheduledAmount: number; dueDate: string; payer: string; memo: string }) => request<Payment>('/api/v1/budget/payments', { method: 'POST', body: JSON.stringify(body) }, session),
   completePayment: (session: Session, id: string | number, actualAmount: number, paidDate: string) => request<Payment>(`/api/v1/budget/payments/${id}/complete`, { method: 'PATCH', body: JSON.stringify({ actualAmount, paidDate }) }, session),
   planningItems: (session: Session) => request<PlanningItem[]>('/api/v1/planning-items', {}, session),

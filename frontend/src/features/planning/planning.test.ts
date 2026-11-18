@@ -23,3 +23,15 @@ describe('planning helpers', () => {
     expect(events.map(event => event.kind)).toEqual(['planning', 'payment'])
   })
 })
+
+describe('shared calendar dates', () => {
+  it('uses one wedding event so editing or clearing the date leaves no duplicate', () => {
+    expect(calendarEvents([], [], '2026-12-01')).toEqual([expect.objectContaining({ id: 'wedding', date: '2026-12-01', kind: 'wedding' })])
+    expect(calendarEvents([], [], null)).toEqual([])
+  })
+  it('shows completed payments on their actual paid date', () => {
+    const events = calendarEvents([], [{ id: 1, title: '잔금', category: '웨딩홀', type: 'BALANCE', scheduledAmount: 3200800, actualAmount: 3200800, dueDate: '2026-12-01', paidDate: '2026-11-18', payer: '공동', status: 'PAID' }])
+    expect(events[0]).toMatchObject({ date: '2026-11-18', done: true })
+    expect(events[0].detail).toContain('3,200,800원')
+  })
+})

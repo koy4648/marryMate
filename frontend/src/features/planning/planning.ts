@@ -4,6 +4,7 @@ export type PlanningStatus = 'TODO' | 'RESEARCHING' | 'SCHEDULED' | 'CONTRACTED'
 export type ReviewType = 'NONE' | 'SECRET_TOUR' | 'CONSULTATION' | 'GUEST_TOUR' | 'GENERAL'
 
 export type PlanningItem = {
+  packageParentId?: number | null
   id: number
   serviceGroup: string
   itemName: string
@@ -30,7 +31,7 @@ export type CalendarEvent = {
   date: string
   title: string
   detail: string
-  kind: 'planning' | 'payment'
+  kind: 'planning' | 'payment' | 'wedding'
   done: boolean
 }
 
@@ -48,16 +49,17 @@ export function planningProgress(items: PlanningItem[]) {
   return { completed, total: active.length, percent: active.length ? Math.round(completed / active.length * 100) : 0 }
 }
 
-export function calendarEvents(items: PlanningItem[], payments: Payment[]): CalendarEvent[] {
-  const plans = items.filter(item => item.scheduleDate).map(item => ({
+export function calendarEvents(items: PlanningItem[], payments: Payment[], weddingDate: string | null = null): CalendarEvent[] {
+  const plans = items.filter(item => item.scheduleDate && item.status !== 'SKIPPED').map(item => ({
     id: `plan-${item.id}`, date: item.scheduleDate!, title: item.vendorName || item.itemName,
     detail: `${item.serviceGroup} · ${item.itemName}`, kind: 'planning' as const, done: item.status === 'DONE',
   }))
-  const due = payments.map(payment => ({
-    id: `payment-${payment.id}`, date: payment.dueDate, title: payment.title,
-    detail: `${payment.category} · ${payment.scheduledAmount.toLocaleString('ko-KR')}원`, kind: 'payment' as const, done: payment.status === 'PAID',
+  const due = payments.filter(payment => !['CANCELLED', 'REFUNDED'].includes(payment.status)).map(payment => ({
+    id: `payment-${payment.id}`, date: payment.status === 'PAID' ? payment.paidDate ?? payment.dueDate : payment.dueDate, title: payment.title,
+    detail: `${payment.category} · ${(payment.status === 'PAID' ? payment.actualAmount : payment.scheduledAmount).toLocaleString('ko-KR')}원${payment.status === 'PAID' ? ' · 납입 완료' : ''}`, kind: 'payment' as const, done: payment.status === 'PAID',
   }))
-  return [...plans, ...due].sort((a, b) => a.date.localeCompare(b.date))
+  const wedding: CalendarEvent[] = weddingDate ? [{ id: 'wedding', date: weddingDate, title: '우리의 결혼식 ♥', detail: '함께 기억할 D-day', kind: 'wedding', done: false }] : []
+  return [...plans, ...due, ...wedding].sort((a, b) => a.date.localeCompare(b.date))
 }
 
 export function monthCells(year: number, month: number) {

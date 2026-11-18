@@ -13,6 +13,11 @@ public class CoupleWorkspace {
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
 
+    @Column(name = "home_title", nullable = false, length = 160) private String homeTitle = "";
+    @Column(name = "home_message", nullable = false, length = 300) private String homeMessage = "";
+    public String getHomeTitle() { return homeTitle; }
+    public String getHomeMessage() { return homeMessage; }
+    public void customizeHome(String title, String message) { homeTitle = title == null ? "" : title.trim(); homeMessage = message == null ? "" : message.trim(); }
     protected CoupleWorkspace() {}
     public CoupleWorkspace(String name) { this(name,null); }
     public CoupleWorkspace(String name,LocalDate weddingDate) { this.name = name; this.weddingDate=weddingDate; this.createdAt = Instant.now(); this.updatedAt = this.createdAt; }

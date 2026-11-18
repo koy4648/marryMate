@@ -29,9 +29,9 @@ public class PlanningController {
         boolean packageContract, @PositiveOrZero BigDecimal packageBaseAmount, @PositiveOrZero BigDecimal packageAdditionalAmount,
         @Size(max=2000) String packageIncludedItems, @Size(max=2000) String packageAdditionalDetails,
         @Min(1) @Max(5) Integer rating, @Pattern(regexp="NONE|SECRET_TOUR|CONSULTATION|GUEST_TOUR|GENERAL") String reviewType,
-        @Size(max=10000) String review, @Size(max=1000) String pros, @Size(max=1000) String cons, @Size(max=1000) String memo) {
+        @Size(max=10000) String review, @Size(max=1000) String pros, @Size(max=1000) String cons, @Size(max=1000) String memo, Long packageParentId) {
         PlanningService.ChangeItem command() { return new PlanningService.ChangeItem(serviceGroup, itemName, vendorName, status,
             scheduleDate, quotedAmount, actualAmount, packageContract, packageBaseAmount, packageAdditionalAmount,
-            packageIncludedItems, packageAdditionalDetails, rating, reviewType, review, pros, cons, memo); }
+            packageIncludedItems, packageAdditionalDetails, rating, reviewType, review, pros, cons, memo, packageParentId); }
     }
 }

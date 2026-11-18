@@ -596,3 +596,28 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
   .package-editor .editor-grid { grid-template-columns:1fr; }
 }
 
+
+/* Shared wedding date and budget controls */
+.topbar { gap:24px; }
+.persistent-dday { flex-shrink:0; display:grid; gap:2px; text-align:center; border:1px solid rgba(241,236,223,.35); border-radius:8px; padding:7px 12px; background:transparent; color:var(--cream); }
+.persistent-dday strong { font-size:14px; }
+.persistent-dday small { font-size:9px; opacity:.75; }
+.hero h1,.hero-copy { white-space:pre-line; overflow-wrap:anywhere; }
+.calendar-legend i.wedding,.upcoming-list i.wedding { background:#ae667c; }
+.calendar-grid article button.wedding { background:#f1e0e6; border-left:3px solid #ae667c; color:#6b3448; }
+.budget-preferences,.estimate-panel { margin-top:24px; }
+.budget-preferences form { display:flex; align-items:end; flex-wrap:wrap; gap:20px; margin:20px 0; }
+.budget-preferences label { display:grid; gap:8px; font-size:12px; }
+.budget-preferences .check-option { display:flex; align-items:center; align-self:center; }
+.budget-preferences input[type=checkbox] { width:auto; accent-color:var(--forest); }
+.budget-preferences input[type=text] { width:180px; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink); }
+.budget-preferences p,.estimate-panel p { font-size:13px; line-height:1.8; }
+.budget-preferences small { color:var(--muted); line-height:1.8; }
+.estimate-row { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:18px 0; border-top:1px solid var(--line); }
+.estimate-row .text-button { text-align:left; }
+.estimate-row small { display:block; margin-top:7px; font-size:11px; color:var(--muted); }
+.estimate-row>div { margin-left:auto; text-align:right; }
+.identity-editor textarea { width:100%; min-height:90px; padding:12px; border:1px solid var(--line); border-radius:8px; font:inherit; background:var(--paper); color:var(--ink); resize:vertical; }
+.form-error { color:#9e3540; font-size:13px; }
+@media(max-width:1100px) { .topbar { gap:14px; }.topbar nav { gap:16px; } }
+@media(max-width:620px) { .topbar { gap:10px; padding:0 14px; }.persistent-dday { padding:6px 9px; }.persistent-dday strong { font-size:12px; }.header-wordmark { width:130px; }.estimate-row { flex-wrap:wrap; }.estimate-row>button:last-child:not(:first-child) { width:100%; }.budget-preferences form { align-items:stretch; flex-direction:column; }.budget-preferences .check-option { align-self:flex-start; } }
