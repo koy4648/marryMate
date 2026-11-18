@@ -73,6 +73,12 @@ class SharedBudgetTests {
         var child=planning.list(workspaceId,userId).stream().filter(i->i.serviceGroup().equals("스튜디오") && i.itemName().equals("드레스")).findFirst().orElseThrow();
         assertEquals(parent.getId(),child.packageParentId());
     }
+    @Test void packagesUseOneCategoryRegardlessOfOriginalService() {
+        var saved=planning.create(workspaceId,userId,new PlanningService.ChangeItem("스튜디오","촬영 묶음","함께 업체","RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("3200800"),BigDecimal.ZERO,"스튜디오 드레스","",null,"NONE","","","","",null));
+        assertEquals("패키지",saved.serviceGroup());
+        assertEquals("촬영 묶음",saved.itemName());
+        assertEquals(0,new BigDecimal("3200800").compareTo(saved.quotedAmount()));
+    }
     @Test void unrelatedUserCannotChangeContractPayments() {
         var item=contract(); var other=auth.signup(UUID.randomUUID()+"@test.local","test-password","다른 사용자",null);
         assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,other.user().id(),item.getId(),stages(day)));

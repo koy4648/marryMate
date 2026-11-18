@@ -95,7 +95,7 @@ public class PlanningService {
         BigDecimal packageBase = command.packageBaseAmount() == null ? BigDecimal.ZERO : command.packageBaseAmount();
         BigDecimal packageAdditional = command.packageAdditionalAmount() == null ? BigDecimal.ZERO : command.packageAdditionalAmount();
         if (quote.signum() < 0 || actual.signum() < 0 || packageBase.signum() < 0 || packageAdditional.signum() < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "금액은 0원 이상이어야 합니다.");
-        item.change(command.serviceGroup(), command.itemName(), command.vendorName(), command.status(), command.scheduleDate(),
+        item.change(command.packageContract() ? "패키지" : command.serviceGroup(), command.itemName(), command.vendorName(), command.status(), command.scheduleDate(),
             quote, actual, command.packageContract(), packageBase, packageAdditional, command.packageIncludedItems(),
             command.packageAdditionalDetails(), command.rating(), command.reviewType(), command.review(), command.pros(), command.cons(), command.memo());
     }
