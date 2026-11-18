@@ -51,6 +51,7 @@ public class PlanningService {
         apply(item, command);
         items.save(item);
         linkPackageTemplates(workspaceId);
+        syncExtraPayments(workspaceId);
         return ItemView.from(item);
     }
 
@@ -60,6 +61,7 @@ public class PlanningService {
         PlanningItem item = find(workspaceId, itemId);
         apply(item, command);
         linkPackageTemplates(workspaceId);
+        syncExtraPayments(workspaceId);
         return ItemView.from(item);
     }
 
@@ -81,6 +83,7 @@ public class PlanningService {
             .filter(item -> item.getPackageParentId()==null && item.getServiceGroup().equals(selected.getServiceGroup()) && item.getItemName().equals(selected.getItemName()))
             .forEach(item -> { if (item.getId().equals(selected.getId())) item.contract(); else item.skip(); });
         linkPackageTemplates(workspaceId);
+        syncExtraPayments(workspaceId);
         return views(workspaceId);
     }
 
@@ -90,19 +93,23 @@ public class PlanningService {
             PlanningItem parent = find(item.getWorkspaceId(), command.packageParentId());
             if (!parent.isPackageContract() || "SKIPPED".equals(parent.getStatus()) || parent.getPackageParentId()!=null || parent.getId().equals(item.getId()) || command.packageContract()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"포함 항목은 다른 패키지 계약에만 연결할 수 있어요.");
         }
-        if(command.packageParentId()!=null && item.getId()!=null && payments.existsByPlanningItemId(item.getId())) throw new ResponseStatusException(HttpStatus.CONFLICT,"개별 결제가 연결된 항목은 패키지에 포함할 수 없어요.");
+        if(command.packageParentId()!=null && item.getId()!=null && payments.findAllByWorkspaceIdOrderByDueDateAsc(item.getWorkspaceId()).stream().anyMatch(p->item.getId().equals(p.getPlanningItemId())&&!"EXTRA".equals(p.getType()))) throw new ResponseStatusException(HttpStatus.CONFLICT,"개별 결제가 연결된 항목은 패키지에 포함할 수 없어요.");
         if(!command.packageContract() && items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(item.getWorkspaceId()).stream().anyMatch(child->item.getId()!=null && item.getId().equals(child.getPackageParentId()))) throw new ResponseStatusException(HttpStatus.CONFLICT,"연결된 포함 항목을 개별 계약으로 변경한 뒤 패키지를 해제해 주세요.");
         item.linkPackage(command.packageParentId());
         BigDecimal quote = command.quotedAmount() == null ? BigDecimal.ZERO : command.quotedAmount();
         BigDecimal actual = command.actualAmount() == null ? BigDecimal.ZERO : command.actualAmount();
         BigDecimal packageBase = command.packageBaseAmount() == null ? BigDecimal.ZERO : command.packageBaseAmount();
-        BigDecimal packageAdditional = command.packageAdditionalAmount() == null ? BigDecimal.ZERO : command.packageAdditionalAmount();
+        BigDecimal extra=command.extraAmount()==null?(command.packageContract() && command.packageAdditionalAmount()!=null?command.packageAdditionalAmount():BigDecimal.ZERO):command.extraAmount();
+        String extraDetails=command.extraDetails()==null?(command.packageContract()?command.packageAdditionalDetails():""):command.extraDetails();
+        BigDecimal packageAdditional=command.packageContract()?extra:BigDecimal.ZERO;
+        if(extra.signum()<0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"추가금은 0원 이상이어야 해요.");
         if (quote.signum() < 0 || actual.signum() < 0 || packageBase.signum() < 0 || packageAdditional.signum() < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "금액은 0원 이상이어야 합니다.");
         if(command.packageContract()) PackageInclusions.parts(command.packageIncludedItems());
         item.change(command.packageContract() ? "패키지" : command.serviceGroup(), command.itemName(), command.vendorName(), command.status(), command.scheduleDate(),
             command.packageParentId()!=null ? BigDecimal.ZERO : quote, command.packageParentId()!=null ? BigDecimal.ZERO : actual, command.packageContract(), packageBase, packageAdditional, command.packageIncludedItems(),
-            command.packageAdditionalDetails(), command.rating(), command.reviewType(), command.review(), command.pros(), command.cons(), command.memo());
+            command.packageContract()?extraDetails:command.packageAdditionalDetails(), command.rating(), command.reviewType(), command.review(), command.pros(), command.cons(), command.memo());
         item.changeScheduleTime(command.scheduleTime());
+        item.changeExtras(extra,extraDetails,command.extraDueDate());
         if(command.packageParentId()!=null) {
             PlanningItem parent=find(item.getWorkspaceId(),command.packageParentId());
             String label=PackageInclusions.labelFor(item.getServiceGroup(),item.getItemName());
@@ -113,6 +120,7 @@ public class PlanningService {
     private boolean untouched(PlanningItem item) {
         return item.getVendorName().isBlank() && "TODO".equals(item.getStatus()) && item.getQuotedAmount().signum()==0
             && item.getActualAmount().signum()==0 && item.getScheduleDate()==null && item.getScheduleTime()==null && item.getRating()==null
+            && item.getExtraAmount().signum()==0 && item.getExtraDetails().isBlank() && item.getExtraDueDate()==null
             && item.getReview().isBlank() && item.getMemo().isBlank() && item.getPros().isBlank() && item.getCons().isBlank()
             && !payments.existsByPlanningItemId(item.getId());
     }
@@ -151,6 +159,29 @@ public class PlanningService {
         }
     }
 
+    private void syncExtraPayments(Long workspaceId) {
+        var all=items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(workspaceId);
+        var ledger=payments.findAllByWorkspaceIdOrderByDueDateAsc(workspaceId);
+        for(var item:all) {
+            var existing=ledger.stream().filter(p->item.getId().equals(p.getPlanningItemId()) && "EXTRA".equals(p.getType())).findFirst();
+            var parent=all.stream().filter(p->p.getId().equals(item.getPackageParentId())).findFirst();
+            boolean confirmed=parent.map(p->java.util.List.of("CONTRACTED","DONE").contains(p.getStatus())).orElse(java.util.List.of("CONTRACTED","DONE").contains(item.getStatus()));
+            boolean active=!"SKIPPED".equals(item.getStatus()) && confirmed;
+            BigDecimal amount=item.getExtraAmount();
+            if(existing.isPresent() && existing.get().getActualAmount().signum()>0 && (amount.compareTo(existing.get().getActualAmount())<0 || item.getExtraDueDate()==null))
+                throw new ResponseStatusException(HttpStatus.CONFLICT,"이미 납입한 추가금은 납입액보다 줄이거나 결제 예정일을 지울 수 없어요.");
+            if(amount.signum()==0 || item.getExtraDueDate()==null || !active) {
+                existing.filter(p->p.getActualAmount().signum()==0).ifPresent(payments::delete); continue;
+            }
+            String category=parent.isPresent()?"패키지":item.getServiceGroup();
+            String title=parent.map(p->(p.getVendorName().isBlank()?p.getItemName():p.getVendorName())+" · ").orElse("")+(item.getVendorName().isBlank()?item.getItemName():item.getVendorName()+" · "+item.getItemName())+" 추가금";
+            title=title.substring(0,Math.min(title.length(),160));
+            var payment=existing.orElse(null);
+            if(payment==null) payment=new com.marrymate.budget.domain.Payment(workspaceId,category,title,"EXTRA",amount,item.getExtraDueDate(),"공동",item.getExtraDetails());
+            payment.linkPlanningItem(item.getId()); payment.updateExtra(category,title,amount,item.getExtraDueDate(),item.getExtraDetails()); payments.save(payment);
+        }
+    }
+
     private PlanningItem find(Long workspaceId, Long itemId) {
         return items.findByIdAndWorkspaceId(itemId, workspaceId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "준비 항목을 찾지 못했습니다."));
@@ -162,16 +193,16 @@ public class PlanningService {
                              BigDecimal quotedAmount, BigDecimal actualAmount, boolean packageContract,
                              BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount, String packageIncludedItems,
                              String packageAdditionalDetails, Integer rating, String reviewType,
-                             String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime) {}
+                             String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime, BigDecimal extraAmount, String extraDetails, LocalDate extraDueDate) {}
     public record ItemView(Long id, String serviceGroup, String itemName, String vendorName, String status,
                            LocalDate scheduleDate, BigDecimal quotedAmount, BigDecimal actualAmount, Integer rating,
                            boolean packageContract, BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount,
                            String packageIncludedItems, String packageAdditionalDetails, String reviewType,
-                           String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime) {
+                           String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime, BigDecimal extraAmount, String extraDetails, LocalDate extraDueDate) {
         static ItemView from(PlanningItem item) { return new ItemView(item.getId(), item.getServiceGroup(), item.getItemName(),
             item.getVendorName(), item.getStatus(), item.getScheduleDate(), item.getQuotedAmount(), item.getActualAmount(),
             item.getRating(), item.isPackageContract(), item.getPackageBaseAmount(), item.getPackageAdditionalAmount(),
             item.getPackageIncludedItems(), item.getPackageAdditionalDetails(), item.getReviewType(), item.getReview(),
-            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId(), item.getScheduleTime()); }
+            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId(), item.getScheduleTime(), item.getExtraAmount(), item.getExtraDetails(), item.getExtraDueDate()); }
     }
 }

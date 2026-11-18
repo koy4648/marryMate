@@ -30,6 +30,11 @@ public class Payment {
         actualAmount=paid ? amount : BigDecimal.ZERO; this.paidDate=paid ? paidDate : null;
         status=paid ? "PAID" : "SCHEDULED"; updatedAt=Instant.now();
     }
+    public void updateExtra(String category,String title,BigDecimal amount,LocalDate date,String memo) {
+        this.category=category; this.title=title; this.scheduledAmount=amount; this.dueDate=date; this.memo=memo;
+        this.status=actualAmount.signum()==0?"SCHEDULED":actualAmount.compareTo(amount)>=0?"PAID":"PARTIALLY_PAID";
+        this.updatedAt=Instant.now();
+    }
     protected Payment() {}
     public Payment(Long workspaceId, String category, String title, String type, BigDecimal scheduledAmount, LocalDate dueDate, String payer, String memo) {
         this.workspaceId = workspaceId; this.category = category; this.title = title; this.type = type; this.status = "SCHEDULED";

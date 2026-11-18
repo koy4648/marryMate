@@ -46,6 +46,15 @@ public class PlanningItem {
         packageIncludedItems=updated; updatedAt=Instant.now();
     }
     public void linkInclusion(Long id,String label) { packageParentId=id; packageInclusion=label; }
+    @Column(name="extra_amount",nullable=false,precision=15,scale=0) private BigDecimal extraAmount=BigDecimal.ZERO;
+    @Column(name="extra_details",nullable=false,length=1000) private String extraDetails="";
+    @Column(name="extra_due_date") private LocalDate extraDueDate;
+    public BigDecimal getExtraAmount() { return packageContract?packageAdditionalAmount:extraAmount; }
+    public String getExtraDetails() { return packageContract?packageAdditionalDetails:extraDetails; }
+    public LocalDate getExtraDueDate() { return extraDueDate; }
+    public void changeExtras(BigDecimal amount,String details,LocalDate dueDate) {
+        extraAmount=packageContract?BigDecimal.ZERO:amount; extraDetails=packageContract?"":value(details); extraDueDate=amount.signum()>0?dueDate:null;
+    }
     protected PlanningItem() {}
 
     public PlanningItem(Long workspaceId, String serviceGroup, String itemName) {

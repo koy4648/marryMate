@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { budgetEstimates, packageFor } from './estimates'
+import { budgetEstimates, packageFor, itemQuote } from './estimates'
 import { formatWon, parseWon, type Payment } from './budget'
 import type { PlanningItem } from '../planning/planning'
 const item = (id: number, change: Partial<PlanningItem> = {}): PlanningItem => ({
@@ -47,6 +47,22 @@ describe('shared estimates', () => {
     const estimates=budgetEstimates([first,second,item(3,{packageParentId:1}),item(4,{packageParentId:2})],[],[payment],true)
     expect(estimates).toHaveLength(2)
     expect(estimates.reduce((sum,entry)=>sum+entry.planned,0)).toBe(3560000)
+  })
+  it('adds an ordinary extra to its base quote once', () => {
+    const ordinary=item(1,{quotedAmount:1000000,extraAmount:12345})
+    expect(itemQuote(ordinary,[])).toBe(1012345)
+    expect(budgetEstimates([ordinary],[],[],true)[0].planned).toBe(1012345)
+  })
+  it('rolls included-item extras and their payments into the parent package once', () => {
+    const parent=item(1,{packageContract:true,status:'CONTRACTED',quotedAmount:1020000,packageBaseAmount:1000000,packageAdditionalAmount:20000,extraAmount:20000})
+    const child=item(2,{packageParentId:1,quotedAmount:0,extraAmount:50000})
+    const extra={...payment,id:2,planningItemId:2,type:'EXTRA' as const,scheduledAmount:50000,actualAmount:0,status:'SCHEDULED' as const}
+    const entries=budgetEstimates([parent,child],[],[payment,extra],true)
+    expect(entries).toHaveLength(1)
+    expect(entries[0].quote).toBe(1070000)
+    expect(entries[0].planned).toBe(1070000)
+    expect(entries[0].includedIds).toEqual([2])
+    expect(entries[0].linked).toHaveLength(2)
   })
   it('includes or excludes honeymoon estimates' , () => {
     const honeymoon = item(1, { serviceGroup: '신혼여행', itemName: '항공권' })

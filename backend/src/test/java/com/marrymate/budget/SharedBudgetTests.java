@@ -36,7 +36,7 @@ class SharedBudgetTests {
     }
     PlanningItem contract() {
         PlanningItem item=new PlanningItem(workspaceId,"스드메","패키지");
-        item.change("스드메","패키지","선택 업체","CONTRACTED",null,new BigDecimal("3200800"),BigDecimal.ZERO,true,new BigDecimal("3000000"),new BigDecimal("200800"),"스튜디오 드레스","",null,"NONE","","","","");
+        item.change("스드메","패키지","선택 업체","CONTRACTED",null,new BigDecimal("3200800"),BigDecimal.ZERO,true,new BigDecimal("3200800"),BigDecimal.ZERO,"스튜디오 드레스","",null,"NONE","","","","");
         return items.save(item);
     }
     List<BudgetService.ContractStage> stages(LocalDate date) {
@@ -74,13 +74,13 @@ class SharedBudgetTests {
         assertEquals(parent.getId(),child.packageParentId());
     }
     @Test void packagesUseOneCategoryRegardlessOfOriginalService() {
-        var saved=planning.create(workspaceId,userId,new PlanningService.ChangeItem("스튜디오","촬영 묶음","함께 업체","RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("3200800"),BigDecimal.ZERO,"스튜디오 드레스","",null,"NONE","","","","",null,null));
+        var saved=planning.create(workspaceId,userId,new PlanningService.ChangeItem("스튜디오","촬영 묶음","함께 업체","RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("3200800"),BigDecimal.ZERO,"스튜디오 드레스","",null,"NONE","","","","",null,null,null,null,null));
         assertEquals("패키지",saved.serviceGroup());
         assertEquals("촬영 묶음",saved.itemName());
         assertEquals(0,new BigDecimal("3200800").compareTo(saved.quotedAmount()));
     }
     PlanningService.ItemView packageWith(String vendor,String includes) {
-        return planning.create(workspaceId,userId,new PlanningService.ChangeItem("패키지","웨딩 패키지",vendor,"RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("1130000"),BigDecimal.ZERO,includes,"",null,"NONE","","","","",null,null));
+        return planning.create(workspaceId,userId,new PlanningService.ChangeItem("패키지","웨딩 패키지",vendor,"RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("1130000"),BigDecimal.ZERO,includes,"",null,"NONE","","","","",null,null,null,null,null));
     }
     @Test void packagesWithTheSameNameHaveTheirOwnItemsAndAreNotCompetingCandidates() {
         planning.list(workspaceId,userId);
@@ -96,15 +96,15 @@ class SharedBudgetTests {
     @Test void removingInclusionPreservesRecordedPreparationButUnlinksIt() {
         var parent=packageWith("다이렉트","DVD|아이폰 스냅");
         var child=planning.list(workspaceId,userId).stream().filter(i->parent.id().equals(i.packageParentId())&&i.itemName().equals("DVD")).findFirst().orElseThrow();
-        planning.update(workspaceId,userId,child.id(),new PlanningService.ChangeItem(child.serviceGroup(),child.itemName(),"촬영 업체","SCHEDULED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 기록",parent.id(),null));
-        planning.update(workspaceId,userId,parent.id(),new PlanningService.ChangeItem("패키지",parent.itemName(),parent.vendorName(),parent.status(),null,BigDecimal.ZERO,BigDecimal.ZERO,true,parent.packageBaseAmount(),BigDecimal.ZERO,"아이폰 스냅","",null,"NONE","","","","",null,null));
+        planning.update(workspaceId,userId,child.id(),new PlanningService.ChangeItem(child.serviceGroup(),child.itemName(),"촬영 업체","SCHEDULED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 기록",parent.id(),null,null,null,null));
+        planning.update(workspaceId,userId,parent.id(),new PlanningService.ChangeItem("패키지",parent.itemName(),parent.vendorName(),parent.status(),null,BigDecimal.ZERO,BigDecimal.ZERO,true,parent.packageBaseAmount(),BigDecimal.ZERO,"아이폰 스냅","",null,"NONE","","","","",null,null,null,null,null));
         var saved=items.findById(child.id()).orElseThrow();
         assertNull(saved.getPackageParentId()); assertEquals("방문 기록",saved.getMemo()); assertEquals(day,saved.getScheduleDate());
     }
     @Test void assigningRecordedItemToPackageReplacesOnlyBlankGeneratedPlaceholder() {
         var parent=packageWith("다이렉트","본식 헤어·메이크업");
-        var recorded=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",null,null));
-        planning.update(workspaceId,userId,recorded.id(),new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,new BigDecimal("100000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",parent.id(),null));
+        var recorded=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",null,null,null,null,null));
+        planning.update(workspaceId,userId,recorded.id(),new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,new BigDecimal("100000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",parent.id(),null,null,null,null));
         var linked=planning.list(workspaceId,userId).stream().filter(i->parent.id().equals(i.packageParentId())).toList();
         assertEquals(1,linked.size()); assertEquals(recorded.id(),linked.getFirst().id());
         assertEquals(day,linked.getFirst().scheduleDate()); assertEquals("방문 메모",linked.getFirst().memo());
@@ -112,13 +112,13 @@ class SharedBudgetTests {
     }
     @Test void assigningKnownPreparationItemAlsoUpdatesParentInclusions() {
         var parent=packageWith("다이렉트","DVD");
-        var linked=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",parent.id(),null));
+        var linked=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",parent.id(),null,null,null,null));
         assertEquals(parent.id(),linked.packageParentId());
         assertTrue(items.findById(parent.id()).orElseThrow().getPackageIncludedItems().contains("본식 헤어·메이크업"));
         assertEquals(2,planning.list(workspaceId,userId).stream().filter(i->parent.id().equals(i.packageParentId())).count());
     }
     PlanningService.ChangeItem visit(LocalDate date,java.time.LocalTime time) {
-        return new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","SCHEDULED",date,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",null,time);
+        return new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","SCHEDULED",date,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",null,time,null,null,null);
     }
     @Test void visitTimePersistsAndCanBeChangedOrClearedWithoutChangingTheDate() {
         var morning=java.time.LocalTime.of(6,30);
@@ -133,6 +133,45 @@ class SharedBudgetTests {
     @Test void aVisitTimeRequiresADate() {
         assertThrows(ResponseStatusException.class,()->planning.create(workspaceId,userId,visit(null,java.time.LocalTime.NOON)));
         assertFalse(items.existsByWorkspaceId(workspaceId));
+    }
+    PlanningService.ChangeItem extraItem(Long parent,String status,long amount,LocalDate due) {
+        return new PlanningService.ChangeItem("스튜디오","드레스","추가금 업체",status,null,new BigDecimal("1000000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",parent,null,BigDecimal.valueOf(amount),"업그레이드",due);
+    }
+    @Test void ordinaryExtraPaymentIsUpdatedWithoutDuplicatesAndKeepsPaidHistory() {
+        var item=planning.create(workspaceId,userId,extraItem(null,"CONTRACTED",12345,day));
+        var first=budgets.get(workspaceId,userId).payments().getFirst();
+        assertEquals("EXTRA",first.type()); assertEquals(item.id(),first.planningItemId());
+        planning.update(workspaceId,userId,item.id(),extraItem(null,"CONTRACTED",15000,day.plusDays(1)));
+        var updated=budgets.get(workspaceId,userId).payments();
+        assertEquals(1,updated.size()); assertEquals(first.id(),updated.getFirst().id()); assertEquals(day.plusDays(1),updated.getFirst().dueDate());
+        budgets.complete(workspaceId,userId,first.id(),new BigDecimal("15000"),day);
+        planning.update(workspaceId,userId,item.id(),extraItem(null,"CONTRACTED",15000,day.plusDays(1)));
+        assertEquals("PAID",budgets.get(workspaceId,userId).payments().getFirst().status());
+        assertThrows(ResponseStatusException.class,()->planning.update(workspaceId,userId,item.id(),extraItem(null,"CONTRACTED",0,null)));
+        assertEquals(0,new BigDecimal("15000").compareTo(items.findById(item.id()).orElseThrow().getExtraAmount()));
+    }
+    @Test void provisionalExtrasBecomePaymentsWhenTheVendorIsSelected() {
+        var item=planning.create(workspaceId,userId,extraItem(null,"RESEARCHING",12345,day));
+        assertTrue(budgets.get(workspaceId,userId).payments().isEmpty());
+        planning.selectCandidate(workspaceId,userId,item.id());
+        assertEquals(1,budgets.get(workspaceId,userId).payments().size());
+    }
+    @Test void includedItemExtraIsSeparateFromPackageBaseInstallments() {
+        var parent=contract();
+        var child=planning.create(workspaceId,userId,extraItem(parent.getId(),"TODO",15000,day));
+        assertEquals(0,BigDecimal.ZERO.compareTo(child.quotedAmount()));
+        var budget=budgets.contract(workspaceId,userId,parent.getId(),stages(day));
+        assertEquals(4,budget.payments().size());
+        assertEquals(1,budget.payments().stream().filter(payment->"EXTRA".equals(payment.type())&&child.id().equals(payment.planningItemId())).count());
+        assertEquals(0,new BigDecimal("3200800").compareTo(items.findById(parent.getId()).orElseThrow().getQuotedAmount()));
+    }
+    @Test void packageCommonExtraIsNotPartOfBaseInstallmentsTwice() {
+        var parent=planning.create(workspaceId,userId,new PlanningService.ChangeItem("패키지","웨딩 패키지","다이렉트","CONTRACTED",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("1000000"),BigDecimal.ZERO,"","",null,"NONE","","","","",null,null,new BigDecimal("15000"),"공통 옵션",day));
+        assertEquals(0,new BigDecimal("1015000").compareTo(parent.quotedAmount()));
+        var stages=List.of(new BudgetService.ContractStage("DEPOSIT",new BigDecimal("100000"),day,false,null,"공동"),new BudgetService.ContractStage("INTERIM",new BigDecimal("400000"),day,false,null,"공동"),new BudgetService.ContractStage("BALANCE",new BigDecimal("500000"),day,false,null,"공동"));
+        var budget=budgets.contract(workspaceId,userId,parent.id(),stages);
+        assertEquals(4,budget.payments().size());
+        assertEquals(0,new BigDecimal("1015000").compareTo(budget.payments().stream().map(BudgetService.PaymentView::scheduledAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
     }
     @Test void unrelatedUserCannotChangeContractPayments() {
         var item=contract(); var other=auth.signup(UUID.randomUUID()+"@test.local","test-password","다른 사용자",null);

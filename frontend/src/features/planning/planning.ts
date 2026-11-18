@@ -12,6 +12,9 @@ export type PlanningItem = {
   status: PlanningStatus
   scheduleDate: string | null
   scheduleTime?: string | null
+  extraAmount?: number
+  extraDetails?: string
+  extraDueDate?: string | null
   quotedAmount: number
   actualAmount: number
   packageContract: boolean

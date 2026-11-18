@@ -23,7 +23,7 @@ public class BudgetService {
         if(item.getPackageParentId()!=null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"패키지 계약에서 결제를 관리해 주세요.");
         if(stages.size()!=3 || stages.stream().map(ContractStage::type).distinct().count()!=3) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"계약금·중도금·잔금을 각각 입력해 주세요.");
         if(!java.util.List.of("CONTRACTED","DONE").contains(item.getStatus())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"업체를 확정한 뒤 결제를 연결해 주세요.");
-        BigDecimal expected=item.getQuotedAmount();
+        BigDecimal expected=item.isPackageContract()?item.getPackageBaseAmount():item.getQuotedAmount();
         if("웨딩홀".equals(item.getServiceGroup())) {
             var consultation=reviews.findAllByWorkspaceIdOrderByCreatedAtDesc(workspaceId).stream().filter(r->itemId.equals(r.getPlanningItemId()) && "CONSULTATION".equals(r.getReviewType())).findFirst();
             if(consultation.isPresent()) { var r=consultation.get(); expected=r.getMealPrice().multiply(BigDecimal.valueOf(r.getMinimumGuarantee())).add(r.getRentalFee()); }
