@@ -24,6 +24,7 @@ public class User {
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
     public String getNickname() { return nickname; }
+    public void changePassword(String hash) { this.passwordHash = hash; this.updatedAt = Instant.now(); }
     public void rename(String nickname) { this.nickname = nickname.trim(); this.updatedAt = Instant.now(); }
 }
 

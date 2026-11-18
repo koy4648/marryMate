@@ -721,3 +721,17 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
 .workspace-actions label input { flex:1 1 0; min-width:0; width:0; }
 .workspace-actions label button { flex:0 0 auto; min-width:56px; white-space:nowrap; }
 .hero h1,.page-title h1,.section-heading h2 { word-break:keep-all; }
+
+.user-profile { position:relative; flex:0 0 auto; }
+.user-avatar { display:grid; place-items:center; width:40px; height:40px; padding:0; border:1px solid #c2b89d; border-radius:50%; background:var(--cream); color:var(--forest); font:700 17px 'Gowun Batang','Noto Sans KR',serif; cursor:pointer; }
+.user-avatar:focus-visible,.user-profile-menu button:focus-visible { outline:2px solid #a5a78d; outline-offset:3px; }
+.user-profile-menu { position:absolute; top:calc(100% + 14px); right:0; width:260px; max-width:calc(100vw - 32px); max-height:calc(100dvh - 160px); overflow:auto; padding:10px; background:var(--cream); border:1px solid #b8c7b5; box-shadow:0 14px 40px #0003; color:var(--ink); z-index:30; }
+.profile-heading { display:grid; gap:5px; padding:10px 10px 14px; border-bottom:1px solid var(--line); margin-bottom:6px; overflow-wrap:anywhere; }
+.profile-heading strong { font-size:15px; }.profile-heading small { font-size:11px; color:var(--muted); }
+.user-profile-menu>button { display:block; width:100%; padding:11px 10px; border:0; background:transparent; text-align:left; font:inherit; font-size:13px; color:var(--ink); cursor:pointer; }
+.user-profile-menu>button:hover { background:#4a513612; }.user-profile-menu>button:disabled { color:var(--muted); opacity:.55; cursor:default; }
+.user-profile-menu hr { border:0; border-top:1px solid var(--line); margin:6px 0; }
+.user-profile-menu .profile-danger { color:#9a413a; }.profile-permission { display:block; padding:0 10px 10px; font-size:10px; color:var(--muted); }
+.profile-dialog { color:var(--ink); }.profile-dialog h2 { font-size:22px; }.profile-dialog p { font-size:13px; line-height:1.8; }.profile-dialog>.primary { margin-top:20px; width:100%; }.profile-dialog .danger-button { padding:12px 18px; }
+.profile-invite-code { display:grid; gap:14px; justify-items:center; padding:24px 12px; border:1px dashed #a5a78d; margin-top:20px; }.profile-invite-code strong { font-size:30px; letter-spacing:4px; color:var(--forest); }.profile-invite-code small { font-size:12px; color:var(--muted); }
+@media(max-width:620px) { .user-avatar { width:36px; height:36px; font-size:15px; }.profile-dialog { padding:24px; }.user-profile-menu { position:fixed; top:64px; right:14px; } }

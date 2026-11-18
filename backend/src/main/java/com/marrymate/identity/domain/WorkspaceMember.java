@@ -16,6 +16,7 @@ public class WorkspaceMember {
     public WorkspaceMember(Long workspaceId, Long userId, String role) { this.workspaceId = workspaceId; this.userId = userId; this.role = role; this.joinedAt = Instant.now(); }
     public Long getWorkspaceId() { return workspaceId; }
     public Long getUserId() { return userId; }
+    public void makeOwner() { this.role = "OWNER"; }
     public String getRole() { return role; }
 }
 

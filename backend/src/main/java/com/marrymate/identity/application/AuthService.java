@@ -35,6 +35,15 @@ public class AuthService {
     }
     @Transactional public void logout(String rawToken) { sessions.deleteByTokenHash(tokens.hash(rawToken)); }
     @Transactional public UserView rename(Long userId, String nickname) { User user=users.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"사용자를 찾지 못했습니다.")); user.rename(nickname); return new UserView(user.getId(),user.getEmail(),user.getNickname()); }
+    @Transactional public SessionView changePassword(Long userId, String currentPassword, String newPassword) {
+        User user=users.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"사용자를 찾지 못했어요."));
+        if(!passwords.matches(currentPassword,user.getPasswordHash())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"현재 비밀번호가 일치하지 않아요.");
+        if(newPassword==null || newPassword.length()<8 || newPassword.length()>100) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"새 비밀번호는 8~100자로 입력해 주세요.");
+        user.changePassword(passwords.encode(newPassword));
+        sessions.deleteByUserId(userId);
+        Long workspaceId=members.findAllByUserId(userId).stream().findFirst().map(WorkspaceMember::getWorkspaceId).orElse(null);
+        return issue(user,workspaceId);
+    }
     private SessionView issue(User user, Long workspaceId) { String raw = tokens.create(); sessions.save(new AuthSession(user.getId(), tokens.hash(raw))); return new SessionView(raw, new UserView(user.getId(), user.getEmail(), user.getNickname()), workspaceId); }
     public record UserView(Long id, String email, String nickname) {}
     public record SessionView(String token, UserView user, Long workspaceId) {}
