@@ -75,8 +75,9 @@ public class PlanningService {
     public List<ItemView> selectCandidate(Long workspaceId, Long userId, Long itemId) {
         workspaces.requireMember(workspaceId, userId);
         PlanningItem selected = find(workspaceId, itemId);
-        items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(workspaceId).stream()
-            .filter(item -> item.getServiceGroup().equals(selected.getServiceGroup()) && item.getItemName().equals(selected.getItemName()))
+        if(selected.isPackageContract()) selected.contract();
+        else items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(workspaceId).stream()
+            .filter(item -> item.getPackageParentId()==null && item.getServiceGroup().equals(selected.getServiceGroup()) && item.getItemName().equals(selected.getItemName()))
             .forEach(item -> { if (item.getId().equals(selected.getId())) item.contract(); else item.skip(); });
         linkPackageTemplates(workspaceId);
         return views(workspaceId);
@@ -95,27 +96,43 @@ public class PlanningService {
         BigDecimal packageBase = command.packageBaseAmount() == null ? BigDecimal.ZERO : command.packageBaseAmount();
         BigDecimal packageAdditional = command.packageAdditionalAmount() == null ? BigDecimal.ZERO : command.packageAdditionalAmount();
         if (quote.signum() < 0 || actual.signum() < 0 || packageBase.signum() < 0 || packageAdditional.signum() < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "금액은 0원 이상이어야 합니다.");
+        if(command.packageContract()) PackageInclusions.parts(command.packageIncludedItems());
         item.change(command.packageContract() ? "패키지" : command.serviceGroup(), command.itemName(), command.vendorName(), command.status(), command.scheduleDate(),
             quote, actual, command.packageContract(), packageBase, packageAdditional, command.packageIncludedItems(),
             command.packageAdditionalDetails(), command.rating(), command.reviewType(), command.review(), command.pros(), command.cons(), command.memo());
     }
 
-    // Only untouched checklist templates are connected automatically. Candidate quotes stay independent.
+    private boolean untouched(PlanningItem item) {
+        return item.getVendorName().isBlank() && "TODO".equals(item.getStatus()) && item.getQuotedAmount().signum()==0
+            && item.getActualAmount().signum()==0 && item.getScheduleDate()==null && item.getRating()==null
+            && item.getReview().isBlank() && item.getMemo().isBlank() && item.getPros().isBlank() && item.getCons().isBlank()
+            && !payments.existsByPlanningItemId(item.getId());
+    }
+
+    // Every inclusion belongs to one package. Reuse blank templates, preserve recorded candidates.
     private void linkPackageTemplates(Long workspaceId) {
-        var all=items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(workspaceId);
-        var labels=java.util.Map.ofEntries(
-            java.util.Map.entry("스튜디오|촬영 작가","스튜디오 촬영"), java.util.Map.entry("스튜디오|스튜디오 대여","스튜디오 촬영"),
-            java.util.Map.entry("스튜디오|드레스","스튜디오 드레스"), java.util.Map.entry("스튜디오|헤어","스튜디오 헤어·메이크업"), java.util.Map.entry("스튜디오|메이크업","스튜디오 헤어·메이크업"),
-            java.util.Map.entry("스튜디오|헬퍼","촬영 헬퍼"), java.util.Map.entry("스튜디오|헤어변형","헤어변형"), java.util.Map.entry("스튜디오|예복","촬영 예복"),
-            java.util.Map.entry("본식|드레스","본식 드레스"), java.util.Map.entry("본식|헤어·메이크업","본식 헤어·메이크업"), java.util.Map.entry("본식|헬퍼","본식 헬퍼"),
-            java.util.Map.entry("본식|예복","본식 예복"), java.util.Map.entry("본식|혼주 한복","혼주 한복"), java.util.Map.entry("본식|혼주 헤어·메이크업","혼주 헤어·메이크업"),
-            java.util.Map.entry("본식 촬영|본식 스냅·원판","본식 스냅·원판"), java.util.Map.entry("본식 촬영|DVD","DVD"), java.util.Map.entry("본식 촬영|아이폰 스냅","아이폰 스냅"), java.util.Map.entry("플래너|웨딩 플래너","플래너"));
-        for(var child:all) {
-            if(child.getPackageParentId()!=null || child.isPackageContract() || !child.getVendorName().isBlank() || !"TODO".equals(child.getStatus()) || child.getQuotedAmount().signum()!=0) continue;
-            String label=labels.get(child.getServiceGroup()+"|"+child.getItemName());
-            if(label==null) continue;
-            var parents=all.stream().filter(parent->parent.isPackageContract() && java.util.List.of("CONTRACTED","DONE").contains(parent.getStatus()) && java.util.Arrays.asList(parent.getPackageIncludedItems().split("\\|")).contains(label)).toList();
-            if(parents.size()==1) child.linkPackage(parents.getFirst().getId());
+        var all=new java.util.ArrayList<>(items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(workspaceId));
+        var parents=all.stream().filter(p->p.isPackageContract() && !"SKIPPED".equals(p.getStatus())).toList();
+        for(var child:java.util.List.copyOf(all)) {
+            if(child.getPackageInclusion()==null) continue;
+            var parent=parents.stream().filter(p->p.getId().equals(child.getPackageParentId())).findFirst();
+            boolean stillIncluded=parent.isPresent() && PackageInclusions.parts(parent.get().getPackageIncludedItems()).stream()
+                .anyMatch(part->part.group().equals(child.getServiceGroup()) && part.name().equals(child.getItemName()));
+            if(!stillIncluded) {
+                if(untouched(child) && PackageInclusions.parts(child.getPackageInclusion()).stream().anyMatch(part->part.group().equals(child.getServiceGroup()) && part.name().equals(child.getItemName()))) { items.delete(child); all.remove(child); }
+                else child.linkPackage(null);
+            }
+        }
+        for(var parent:parents) {
+            for(var part:PackageInclusions.parts(parent.getPackageIncludedItems())) {
+                var linked=all.stream().filter(c->parent.getId().equals(c.getPackageParentId()) && part.group().equals(c.getServiceGroup()) && part.name().equals(c.getItemName())).findFirst();
+                if(linked.isPresent()) { linked.get().linkInclusion(parent.getId(),part.label()); continue; }
+                var blank=all.stream().filter(c->!c.isPackageContract() && c.getPackageParentId()==null && part.group().equals(c.getServiceGroup()) && part.name().equals(c.getItemName()) && untouched(c)).findFirst();
+                PlanningItem child=blank.orElseGet(()->{
+                    var created=items.save(new PlanningItem(workspaceId,part.group(),part.name())); all.add(created); return created;
+                });
+                child.linkInclusion(parent.getId(),part.label());
+            }
         }
     }
 

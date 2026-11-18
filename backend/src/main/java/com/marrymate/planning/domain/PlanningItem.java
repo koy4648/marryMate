@@ -33,7 +33,10 @@ public class PlanningItem {
 
     @Column(name="package_parent_id") private Long packageParentId;
     public Long getPackageParentId() { return packageParentId; }
-    public void linkPackage(Long id) { packageParentId=id; }
+    @Column(name="package_inclusion", length=120) private String packageInclusion;
+    public String getPackageInclusion() { return packageInclusion; }
+    public void linkPackage(Long id) { if(!java.util.Objects.equals(packageParentId,id)) packageInclusion=null; packageParentId=id; }
+    public void linkInclusion(Long id,String label) { packageParentId=id; packageInclusion=label; }
     protected PlanningItem() {}
 
     public PlanningItem(Long workspaceId, String serviceGroup, String itemName) {

@@ -79,6 +79,28 @@ class SharedBudgetTests {
         assertEquals("촬영 묶음",saved.itemName());
         assertEquals(0,new BigDecimal("3200800").compareTo(saved.quotedAmount()));
     }
+    PlanningService.ItemView packageWith(String vendor,String includes) {
+        return planning.create(workspaceId,userId,new PlanningService.ChangeItem("패키지","웨딩 패키지",vendor,"RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("1130000"),BigDecimal.ZERO,includes,"",null,"NONE","","","","",null));
+    }
+    @Test void packagesWithTheSameNameHaveTheirOwnItemsAndAreNotCompetingCandidates() {
+        planning.list(workspaceId,userId);
+        var first=packageWith("다이렉트","스튜디오 촬영|부케|특별 서비스");
+        var second=packageWith("더라운지","스튜디오 촬영|DVD");
+        var all=planning.list(workspaceId,userId);
+        assertEquals(4,all.stream().filter(i->first.id().equals(i.packageParentId())).count());
+        assertEquals(3,all.stream().filter(i->second.id().equals(i.packageParentId())).count());
+        assertEquals(all.size(),planning.list(workspaceId,userId).size());
+        planning.selectCandidate(workspaceId,userId,first.id());
+        assertEquals("RESEARCHING",items.findById(second.id()).orElseThrow().getStatus());
+    }
+    @Test void removingInclusionPreservesRecordedPreparationButUnlinksIt() {
+        var parent=packageWith("다이렉트","DVD|아이폰 스냅");
+        var child=planning.list(workspaceId,userId).stream().filter(i->parent.id().equals(i.packageParentId())&&i.itemName().equals("DVD")).findFirst().orElseThrow();
+        planning.update(workspaceId,userId,child.id(),new PlanningService.ChangeItem(child.serviceGroup(),child.itemName(),"촬영 업체","SCHEDULED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 기록",parent.id()));
+        planning.update(workspaceId,userId,parent.id(),new PlanningService.ChangeItem("패키지",parent.itemName(),parent.vendorName(),parent.status(),null,BigDecimal.ZERO,BigDecimal.ZERO,true,parent.packageBaseAmount(),BigDecimal.ZERO,"아이폰 스냅","",null,"NONE","","","","",null));
+        var saved=items.findById(child.id()).orElseThrow();
+        assertNull(saved.getPackageParentId()); assertEquals("방문 기록",saved.getMemo()); assertEquals(day,saved.getScheduleDate());
+    }
     @Test void unrelatedUserCannotChangeContractPayments() {
         var item=contract(); var other=auth.signup(UUID.randomUUID()+"@test.local","test-password","다른 사용자",null);
         assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,other.user().id(),item.getId(),stages(day)));

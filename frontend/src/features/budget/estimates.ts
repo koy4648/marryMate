@@ -14,9 +14,10 @@ export function packageFor(item: PlanningItem, items: PlanningItem[]) {
 
 // Each comparison contributes once: the selected vendor, or the lowest provisional quote.
 export function budgetEstimates(items: PlanningItem[], reviews: VenueReview[], payments: Payment[], includeHoneymoon: boolean) {
+  const includedKeys = new Set(items.filter(item => packageFor(item, items)).map(item => `${item.serviceGroup}|${item.itemName}`))
   const groups = new Map<string, PlanningItem[]>()
-  items.filter(item => item.status !== 'SKIPPED' && !packageFor(item, items) && (includeHoneymoon || item.serviceGroup !== '신혼여행')).forEach(item => {
-    const key = `${item.serviceGroup}|${item.itemName}`
+  items.filter(item => item.status !== 'SKIPPED' && !packageFor(item, items) && (item.packageContract || !includedKeys.has(`${item.serviceGroup}|${item.itemName}`) || ['CONTRACTED','DONE'].includes(item.status)) && (includeHoneymoon || item.serviceGroup !== '신혼여행')).forEach(item => {
+    const key = item.packageContract ? `package-${item.id}` : `${item.serviceGroup}|${item.itemName}`
     groups.set(key, [...groups.get(key) ?? [], item])
   })
   return [...groups.values()].flatMap(candidates => {

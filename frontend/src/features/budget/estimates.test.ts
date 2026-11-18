@@ -29,11 +29,26 @@ describe('shared estimates', () => {
     expect(estimates[0].planned).toBe(3200800)
     expect(estimates[0].linked).toEqual([payment])
   })
-  it('keeps individual estimates when their package is skipped', () => {
+  it('does not add provisional alternatives for an item already included in a package', () => {
+    const parent=item(1,{serviceGroup:'패키지',packageContract:true,status:'CONTRACTED'})
+    const child=item(2,{packageParentId:1})
+    const alternative=item(3,{quotedAmount:1000000})
+    expect(budgetEstimates([parent,child,alternative],[],[],true).map(entry=>entry.item.id)).toEqual([1])
+    alternative.status='CONTRACTED'
+    expect(budgetEstimates([parent,child,alternative],[],[],true).map(entry=>entry.item.id)).toEqual([1,3])
+  })
+  it('keeps individual estimates when their package is skipped' , () => {
     const entries = budgetEstimates([item(1, { packageContract: true, status: 'SKIPPED' }), item(2, { packageParentId: 1 })], [], [], true)
     expect(entries[0].item.id).toBe(2)
   })
-  it('includes or excludes honeymoon estimates', () => {
+  it('counts two packages with the same category and item name independently, excluding every inclusion', () => {
+    const first=item(1,{serviceGroup:'패키지',itemName:'웨딩 패키지',packageContract:true,status:'CONTRACTED',quotedAmount:2430000})
+    const second=item(2,{...first,id:2,vendorName:'더라운지',quotedAmount:1130000})
+    const estimates=budgetEstimates([first,second,item(3,{packageParentId:1}),item(4,{packageParentId:2})],[],[payment],true)
+    expect(estimates).toHaveLength(2)
+    expect(estimates.reduce((sum,entry)=>sum+entry.planned,0)).toBe(3560000)
+  })
+  it('includes or excludes honeymoon estimates' , () => {
     const honeymoon = item(1, { serviceGroup: '신혼여행', itemName: '항공권' })
     expect(budgetEstimates([honeymoon], [], [], false)).toEqual([])
     expect(budgetEstimates([honeymoon], [], [], true)).toHaveLength(1)
