@@ -11,6 +11,12 @@ describe('checklist layout preferences',()=>{
     expect(moveCategory(categories,moved,'스튜디오',-1)).toEqual(moved)
     expect(categories).toEqual(['본식','스튜디오','신혼여행'])
   })
+  it('keeps completion grouping opt-in for existing preferences and remembers an explicit choice',()=>{
+    const old=readChecklistLayouts(JSON.stringify({'1:3':{order:['본식'],sorts:{}}}))
+    expect(old['1:3'].separateCompleted).toBe(false)
+    const selected=readChecklistLayouts(JSON.stringify({'1:3':{...old['1:3'],separateCompleted:true}}))
+    expect(selected['1:3'].separateCompleted).toBe(true)
+  })
   it('restores independent category sorts and isolates users and workspaces',()=>{
     const first=checklistLayoutKey(1,3),second=checklistLayoutKey(2,3),third=checklistLayoutKey(1,4)
     expect(new Set([first,second,third]).size).toBe(3)

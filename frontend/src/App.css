@@ -386,7 +386,7 @@ main { padding-top:42px; }
 .hero::after { right:42px; bottom:36px; width:125px; height:1px; border:0; border-radius:0; background:rgba(241,236,223,.48); transform:none; }
 .hero-story { display:flex; flex:1; flex-direction:column; justify-content:flex-end; align-items:flex-start; position:relative; z-index:1; }
 .hero .eyebrow { color:rgba(241,236,223,.72); }
-.hero h1 { max-width:620px; color:var(--cream); font:400 58px/1.18 'Gowun Batang','Noto Sans KR',serif!important; letter-spacing:-.055em; text-shadow:0 2px 22px rgba(0,0,0,.32); }
+.hero h1 { max-width:620px; color:var(--cream); font:400 58px/1.18 'Gowun Batang','Noto Sans KR',serif; letter-spacing:-.055em; text-shadow:0 2px 22px rgba(0,0,0,.32); }
 .hero h1 em { color:var(--cream); font-style:italic; text-decoration:none; }
 .hero-copy { color:rgba(241,236,223,.72); }
 .hero-note { margin:28px 0 0; padding:0; background:none; color:rgba(241,236,223,.72); box-shadow:none; font:italic 20px 'Cormorant Garamond',serif; letter-spacing:.08em; transform:none; }
@@ -686,3 +686,38 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
 .category-move button:disabled { opacity:.3; cursor:default; }
 .check-group-title { flex-wrap:wrap; gap:12px; }
 .check-group .sort-controls { margin:10px 0 20px; }
+
+.checklist-view-options { display:flex; flex-wrap:wrap; align-items:center; gap:10px 20px; margin:0 0 24px; }
+.checklist-view-options label { display:flex; align-items:center; gap:9px; font-size:13px; }
+.checklist-view-options input { accent-color:var(--forest); }
+.checklist-view-options small { font-size:11px; color:var(--muted); }
+.checklist-section-heading { display:flex; align-items:center; gap:12px; margin:28px 0 20px; }
+.checklist-section-heading h2 { margin:0; font:26px 'Gowun Batang',serif; }
+.checklist-section-heading>span { font-size:12px; color:var(--muted); }
+.checklist-completed { border-top:1px solid var(--line); padding-top:20px; margin-top:40px; }
+.checklist-view-options,.checklist-section-heading { color:var(--cream); }
+.checklist-view-options small,.checklist-section-heading>span,.checklist-pending>.empty,.checklist-completed>.empty { color:rgba(241,236,223,.75); }
+.check-group .sort-controls label>span,.category-move>span { color:rgba(241,236,223,.85); }
+.budget-list-filter { color:var(--cream); }
+.budget-list-filter small { color:rgba(241,236,223,.75); }
+.page-section>.sort-controls { color:var(--cream); }
+
+/* Let long names wrap inside cards instead of enlarging grid and flex tracks. */
+.workspace-card>div,.dashboard-grid>article,.check-group,.check-grid,.comparison-list,.compare-section,.compare-cards,.vendor-card,.vendor-card-content { min-width:0; }
+.workspace-card strong,.workspace-member-name,.upcoming-list strong,.vendor-head strong,.estimate-row .text-button { overflow-wrap:anywhere; }
+.upcoming-list button>span,.vendor-head strong { min-width:0; }
+.check-card { min-width:0; grid-template-columns:34px minmax(0,1fr) auto; }
+.check-card>div { min-width:0; overflow-wrap:anywhere; }
+.estimate-row .text-button { flex:1 1 160px; min-width:0; max-width:100%; }
+@media(max-width:900px) { .dashboard-grid { grid-template-columns:minmax(0,1fr); } }
+@media(max-width:620px) {
+  .compare-cards { max-width:100%; overflow-x:auto; }
+  .compare-cards>.vendor-card { flex:0 0 min(300px,100%); min-width:0; }
+}
+.section-heading>div { min-width:0; }
+.item-editor h2,.contract-planner h2,.identity-editor h2,.contract-package-note strong { overflow-wrap:anywhere; }
+.section-heading>.icon-button { flex-shrink:0; }
+
+.workspace-actions label input { flex:1 1 0; min-width:0; width:0; }
+.workspace-actions label button { flex:0 0 auto; min-width:56px; white-space:nowrap; }
+.hero h1,.page-title h1,.section-heading h2 { word-break:keep-all; }

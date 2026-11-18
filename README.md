@@ -30,6 +30,7 @@ Marry Mate V2는 준비 항목, 후보 업체, 체크리스트, 견적, 계약, 
 - 준비 체크에서 계약금·중도금·잔금 관리 (예산·캘린더와 같은 기록 사용)
 - 예산 목록의 납입 완료 기본 숨김 및 다시 보기
 - 준비 체크 카테고리별 정렬·카테고리 순서 변경 (브라우저에 사용자·공간별 저장)
+- 선택형 완료 분리 보기: 기본 목록을 유지하고 켰을 때 완료 항목을 아래에 모아 표시
 
 기존 프로토타입은 `feature/backend-rebuild` 브랜치의 `cf286f6` 커밋에 보존되어 있습니다.
 
@@ -104,3 +105,5 @@ cd frontend && corepack pnpm lint && corepack pnpm test && corepack pnpm build
 7. 일정·캘린더 — 1차 완료
 8. 첨부파일·알림·결제 수정 및 부분 결제
 
+
+장기 운영 전환은 [운영 이전 안내](docs/operations/production-migration.md)를 참고합니다.
