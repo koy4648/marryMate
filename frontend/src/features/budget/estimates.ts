@@ -7,12 +7,12 @@ export function itemExtra(item: PlanningItem) {
 }
 
 export function contractBaseAmount(item: PlanningItem) {
-  return item.packageContract ? item.packageBaseAmount : item.quotedAmount
+  return item.packageContract ? item.packageBaseAmount : item.contractAmountOverride ?? item.quotedAmount
 }
 
 export function itemQuote(item: PlanningItem, reviews: VenueReview[], items: PlanningItem[] = []) {
   const consultation = reviews.find(review => review.planningItemId === item.id && review.reviewType === 'CONSULTATION')
-  const base = item.serviceGroup === '웨딩홀' && consultation
+  const base = item.serviceGroup === '웨딩홀' && item.contractAmountOverride != null ? item.contractAmountOverride : item.serviceGroup === '웨딩홀' && consultation
     ? consultation.mealPrice * consultation.minimumGuarantee + consultation.rentalFee : item.quotedAmount
   const childExtras = item.packageContract ? items.filter(child=>child.packageParentId===item.id&&child.status!=='SKIPPED').reduce((sum,child)=>sum+itemExtra(child),0) : 0
   return base + (item.packageContract ? 0 : itemExtra(item)) + childExtras

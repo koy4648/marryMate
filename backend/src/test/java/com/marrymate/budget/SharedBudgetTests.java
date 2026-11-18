@@ -26,6 +26,7 @@ class SharedBudgetTests {
     @Autowired WorkspaceService workspaces;
     @Autowired PlanningService planning;
     @Autowired PlanningItemRepository items;
+    @Autowired com.marrymate.planning.repository.VenueReviewRepository venueReviews;
     Long workspaceId;
     Long userId;
     LocalDate day=LocalDate.of(2026,11,18);
@@ -74,6 +75,47 @@ class SharedBudgetTests {
         assertEquals("신랑",revised.stream().filter(p->p.type().equals("DEPOSIT")).findFirst().orElseThrow().payer());
         var paidBalance=revised.stream().filter(p->p.type().equals("BALANCE")).findFirst().orElseThrow();
         assertEquals("신랑 측 부모님",paidBalance.payer()); assertEquals("PAID",paidBalance.status());
+    }
+    @Test void totalChangeRequiresConfirmationAndUpdatesPackageBaseWithPaymentsAtomically() {
+        var item=contract();
+        var changed=new java.util.ArrayList<>(stages(day));
+        changed.set(2,new BudgetService.ContractStage("BALANCE",new BigDecimal("1700400"),day,false,null,"신부"));
+        assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,userId,item.getId(),changed));
+        assertEquals(0,new BigDecimal("3200800").compareTo(items.findById(item.getId()).orElseThrow().getPackageBaseAmount()));
+        var saved=budgets.contract(workspaceId,userId,item.getId(),changed,new BigDecimal("3300800"));
+        assertEquals(0,new BigDecimal("3300800").compareTo(items.findById(item.getId()).orElseThrow().getPackageBaseAmount()));
+        assertEquals(0,new BigDecimal("3300800").compareTo(saved.payments().stream().map(BudgetService.PaymentView::scheduledAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
+        budgets.contract(workspaceId,userId,item.getId(),changed);
+        assertEquals(3,budgets.get(workspaceId,userId).payments().size());
+    }
+    @Test void invalidScheduleRollsBackTheConfirmedTotalChangeAsWell() {
+        var item=contract();
+        var changed=new java.util.ArrayList<>(stages(day));
+        changed.set(2,new BudgetService.ContractStage("BALANCE",new BigDecimal("1700400"),null,false,null,"신부"));
+        assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,userId,item.getId(),changed,new BigDecimal("3300800")));
+        assertEquals(0,new BigDecimal("3200800").compareTo(items.findById(item.getId()).orElseThrow().getPackageBaseAmount()));
+        assertTrue(budgets.get(workspaceId,userId).payments().isEmpty());
+        assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,userId,item.getId(),stages(day),new BigDecimal("1")));
+    }
+    @Test void revisingPackageBaseKeepsAdditionalChargesSeparate() {
+        var parent=planning.create(workspaceId,userId,new PlanningService.ChangeItem("패키지","웨딩 패키지","업체","CONTRACTED",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("1000000"),BigDecimal.ZERO,"","",null,"NONE","","","","",null,null,new BigDecimal("15000"),"공통 옵션",day));
+        budgets.contract(workspaceId,userId,parent.id(),stages(day),new BigDecimal("3200800"));
+        var updated=items.findById(parent.id()).orElseThrow();
+        assertEquals(0,new BigDecimal("15000").compareTo(updated.getPackageAdditionalAmount()));
+        assertEquals(0,new BigDecimal("3215800").compareTo(updated.getQuotedAmount()));
+        assertEquals(4,budgets.get(workspaceId,userId).payments().size());
+    }
+    @Test void venueTotalOverridePersistsWithoutChangingConsultationHistory() {
+        var item=items.save(new PlanningItem(workspaceId,"웨딩홀","웨딩홀 투어")); item.contract(); items.save(item);
+        var review=new com.marrymate.planning.domain.VenueReview(workspaceId,item.getId());
+        review.change("CONSULTATION",day,"상담 기록","","",new BigDecimal("50000"),100,new BigDecimal("1000000"),"서비스","");
+        venueReviews.save(review);
+        budgets.contract(workspaceId,userId,item.getId(),stages(day),new BigDecimal("3200800"));
+        var updated=planning.list(workspaceId,userId).stream().filter(i->i.id().equals(item.getId())).findFirst().orElseThrow();
+        assertEquals(0,new BigDecimal("3200800").compareTo(updated.contractAmountOverride()));
+        budgets.contract(workspaceId,userId,item.getId(),stages(day));
+        assertEquals(0,new BigDecimal("50000").compareTo(venueReviews.findById(review.getId()).orElseThrow().getMealPrice()));
+        assertEquals(3,budgets.get(workspaceId,userId).payments().size());
     }
     @Test void invalidBatchDoesNotLeaveHalfSavedPayments() {
         var item=contract();

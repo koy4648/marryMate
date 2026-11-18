@@ -18,6 +18,7 @@ public class PlanningItem {
     @Column(name = "schedule_date") private LocalDate scheduleDate;
     @Column(name = "schedule_time") private LocalTime scheduleTime;
     @Column(name = "quoted_amount", nullable = false, precision = 15, scale = 0) private BigDecimal quotedAmount;
+    @Column(name = "contract_amount_override", precision = 15, scale = 0) private BigDecimal contractAmountOverride;
     @Column(name = "actual_amount", nullable = false, precision = 15, scale = 0) private BigDecimal actualAmount;
     @Column(name = "package_contract", nullable = false) private boolean packageContract;
     @Column(name = "package_base_amount", nullable = false, precision = 15, scale = 0) private BigDecimal packageBaseAmount;
@@ -105,6 +106,17 @@ public class PlanningItem {
         this.updatedAt = Instant.now();
     }
 
+    public BigDecimal getContractAmountOverride() { return contractAmountOverride; }
+    public void reviseContractAmount(BigDecimal amount) {
+        if (packageContract) {
+            packageBaseAmount = amount;
+            quotedAmount = amount.add(packageAdditionalAmount);
+        } else {
+            quotedAmount = amount;
+            if ("웨딩홀".equals(serviceGroup)) contractAmountOverride = amount;
+        }
+        updatedAt = Instant.now();
+    }
     public void contract() { this.status = "CONTRACTED"; this.updatedAt = Instant.now(); }
     public void skip() { this.status = "SKIPPED"; this.updatedAt = Instant.now(); }
 

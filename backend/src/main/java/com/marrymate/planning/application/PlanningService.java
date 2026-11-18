@@ -198,11 +198,11 @@ public class PlanningService {
                            LocalDate scheduleDate, BigDecimal quotedAmount, BigDecimal actualAmount, Integer rating,
                            boolean packageContract, BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount,
                            String packageIncludedItems, String packageAdditionalDetails, String reviewType,
-                           String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime, BigDecimal extraAmount, String extraDetails, LocalDate extraDueDate) {
+                           String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime, BigDecimal extraAmount, String extraDetails, LocalDate extraDueDate, BigDecimal contractAmountOverride) {
         static ItemView from(PlanningItem item) { return new ItemView(item.getId(), item.getServiceGroup(), item.getItemName(),
             item.getVendorName(), item.getStatus(), item.getScheduleDate(), item.getQuotedAmount(), item.getActualAmount(),
             item.getRating(), item.isPackageContract(), item.getPackageBaseAmount(), item.getPackageAdditionalAmount(),
             item.getPackageIncludedItems(), item.getPackageAdditionalDetails(), item.getReviewType(), item.getReview(),
-            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId(), item.getScheduleTime(), item.getExtraAmount(), item.getExtraDetails(), item.getExtraDueDate()); }
+            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId(), item.getScheduleTime(), item.getExtraAmount(), item.getExtraDetails(), item.getExtraDueDate(), item.getContractAmountOverride()); }
     }
 }

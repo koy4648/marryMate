@@ -18,17 +18,27 @@ public class BudgetService {
         plan.preferences(honeymoon,gifts,giftAmount); return view(workspaceId);
     }
     @Transactional public BudgetView contract(Long workspaceId, Long userId, Long itemId, List<ContractStage> stages) {
+        return contract(workspaceId,userId,itemId,stages,null);
+    }
+    @Transactional public BudgetView contract(Long workspaceId, Long userId, Long itemId, List<ContractStage> stages, BigDecimal revisedTotal) {
         workspaces.requireMember(workspaceId,userId);
         var item=planning.findByIdAndWorkspaceId(itemId,workspaceId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"계약을 찾지 못했어요."));
         if(item.getPackageParentId()!=null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"패키지 계약에서 결제를 관리해 주세요.");
         if(stages.size()!=3 || stages.stream().map(ContractStage::type).distinct().count()!=3) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"계약금·중도금·잔금을 각각 입력해 주세요.");
         if(!java.util.List.of("CONTRACTED","DONE").contains(item.getStatus())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"업체를 확정한 뒤 결제를 연결해 주세요.");
         BigDecimal expected=item.isPackageContract()?item.getPackageBaseAmount():item.getQuotedAmount();
-        if("웨딩홀".equals(item.getServiceGroup())) {
+        if("웨딩홀".equals(item.getServiceGroup()) && item.getContractAmountOverride()==null) {
             var consultation=reviews.findAllByWorkspaceIdOrderByCreatedAtDesc(workspaceId).stream().filter(r->itemId.equals(r.getPlanningItemId()) && "CONSULTATION".equals(r.getReviewType())).findFirst();
             if(consultation.isPresent()) { var r=consultation.get(); expected=r.getMealPrice().multiply(BigDecimal.valueOf(r.getMinimumGuarantee())).add(r.getRentalFee()); }
         }
-        if(stages.stream().map(ContractStage::amount).reduce(BigDecimal.ZERO,BigDecimal::add).compareTo(expected)!=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"계약금·중도금·잔금 합계를 계약 총액과 맞춰주세요.");
+        if(item.getContractAmountOverride()!=null && "웨딩홀".equals(item.getServiceGroup())) expected=item.getContractAmountOverride();
+        BigDecimal total=stages.stream().map(ContractStage::amount).reduce(BigDecimal.ZERO,BigDecimal::add);
+        if(revisedTotal!=null) {
+            if(revisedTotal.signum()<=0 || revisedTotal.precision()>15 || revisedTotal.stripTrailingZeros().scale()>0 || revisedTotal.compareTo(total)!=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"변경할 총액은 납입 합계와 같고 0원보다 커야 해요.");
+            item.reviseContractAmount(revisedTotal); expected=revisedTotal;
+            if(item.getQuotedAmount().precision()>15) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"추가금을 포함한 총액이 입력 범위를 초과했어요.");
+        }
+        if(total.compareTo(expected)!=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"계약금·중도금·잔금 합계를 계약 총액과 맞춰주세요.");
         var existing=payments.findAllByWorkspaceIdOrderByDueDateAsc(workspaceId);
         for(var stage:stages) {
             var found=existing.stream().filter(p->itemId.equals(p.getPlanningItemId()) && stage.type().equals(p.getType())).findFirst();

@@ -4,6 +4,7 @@ export type PlanningStatus = 'TODO' | 'RESEARCHING' | 'SCHEDULED' | 'CONTRACTED'
 export type ReviewType = 'NONE' | 'SECRET_TOUR' | 'CONSULTATION' | 'GUEST_TOUR' | 'GENERAL'
 
 export type PlanningItem = {
+  contractAmountOverride?: number | null
   packageParentId?: number | null
   id: number
   serviceGroup: string

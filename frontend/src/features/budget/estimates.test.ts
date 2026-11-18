@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { budgetEstimates, packageFor, itemQuote, contractPayments } from './estimates'
+import { budgetEstimates, packageFor, itemQuote, contractPayments, contractBaseAmount } from './estimates'
 import { formatWon, parseWon, type Payment } from './budget'
 import type { PlanningItem } from '../planning/planning'
 const item = (id: number, change: Partial<PlanningItem> = {}): PlanningItem => ({
@@ -98,5 +98,21 @@ describe('contract-only budget', () => {
     const payments = [payment, {...payment,id:2,planningItemId:2,type:'EXTRA' as const}, {...payment,id:3,planningItemId:3}, {...payment,id:4,planningItemId:4}, {...payment,id:5,planningItemId:null}, {...payment,id:6,planningItemId:99}]
     expect(contractPayments(items,payments).map(payment=>payment.id)).toEqual([1,2,5])
     expect(budgetEstimates([item(1,{serviceGroup:'신혼여행',status:'CONTRACTED'})],[],[],false,true)).toEqual([])
+  })
+})
+
+describe('revised contract totals', () => {
+  it('uses the confirmed venue total instead of the original consultation estimate', () => {
+    const venue=item(1,{serviceGroup:'웨딩홀',contractAmountOverride:3300800,quotedAmount:0,extraAmount:20000,status:'CONTRACTED'})
+    const reviews=[{id:1,planningItemId:1,reviewType:'CONSULTATION' as const,visitedDate:null,content:'원래 상담',pros:'',cons:'',mealPrice:50000,minimumGuarantee:100,rentalFee:1000000,serviceItems:'',sameDayBenefits:''}]
+    expect(contractBaseAmount(venue)).toBe(3300800)
+    expect(itemQuote(venue,reviews)).toBe(3320800)
+    expect(budgetEstimates([venue],reviews,[],true,true)[0].planned).toBe(3320800)
+    expect(reviews[0].mealPrice).toBe(50000)
+  })
+  it('keeps additional package charges outside the installment total', () => {
+    const parent=item(1,{packageContract:true,packageBaseAmount:3300800,packageAdditionalAmount:20000,quotedAmount:3320800})
+    expect(contractBaseAmount(parent)).toBe(3300800)
+    expect(itemQuote(parent,[])).toBe(3320800)
   })
 })
