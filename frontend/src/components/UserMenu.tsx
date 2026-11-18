@@ -11,10 +11,11 @@ type Props = {
   onInvite: () => Promise<string>
   onPassword: (current: string, next: string) => Promise<void>
   onLeave: () => Promise<void>
+  onSpaces: () => void
   onLogout: () => void
 }
 
-export function UserMenu({ session, workspace, onIdentity, onInvite, onPassword, onLeave, onLogout }: Props) {
+export function UserMenu({ session, workspace, onIdentity, onInvite, onPassword, onLeave, onLogout, onSpaces }: Props) {
   const [open, setOpen] = useState(false)
   const [dialog, setDialog] = useState<'password' | 'leave' | 'invite' | null>(null)
   const [busy, setBusy] = useState(false)
@@ -80,6 +81,7 @@ export function UserMenu({ session, workspace, onIdentity, onInvite, onPassword,
       <div className="profile-heading"><strong>{session.user.nickname}</strong><small>{session.user.email}</small>{workspace && <small>{workspace.name} · {owner ? '모임장' : '참여자'}</small>}</div>
       <button onClick={() => identity('nickname')}>이름 변경</button>
       <button onClick={() => start('password')}>비밀번호 변경</button>
+      <button onClick={() => { setOpen(false); onSpaces() }}>스페이스 전환·만들기·참여</button>
       {workspace && <><hr/><button onClick={() => start('invite')}>초대 코드 만들기</button><button onClick={() => identity('workspaceName')} disabled={!owner}>모임 이름 변경</button><button onClick={() => identity('weddingDate')} disabled={!owner}>예식일 변경</button><button onClick={() => identity('homeTitle')} disabled={!owner}>메인 문구 변경</button>{!owner && <small className="profile-permission">모임 정보는 모임장이 변경할 수 있어요.</small>}<hr/><button className="profile-danger" onClick={() => start('leave')}>모임 떠나기</button></>}
       <button onClick={() => { setOpen(false); onLogout() }}>로그아웃</button>
     </div>}

@@ -36,8 +36,8 @@ class SharedBudgetTests {
 
     @BeforeEach void setup() {
         email=UUID.randomUUID()+"@test.local";
-        var session=auth.signup(email,"test-password","테스트",null);
-        workspaceId=session.workspaceId(); userId=session.user().id();
+        var session=auth.signup(email,"test-password","테스트");
+        userId=session.user().id(); workspaceId=workspaces.create(userId,"테스트의 결혼 준비",null).id();
     }
     PlanningItem contract() {
         PlanningItem item=new PlanningItem(workspaceId,"스드메","패키지");
@@ -57,7 +57,7 @@ class SharedBudgetTests {
         assertTrue(updated.payments().stream().allMatch(p->p.planningItemId().equals(item.getId()) && p.dueDate().equals(day.plusDays(10))));
         assertEquals(0,new BigDecimal("3200800").compareTo(updated.payments().stream().map(BudgetService.PaymentView::scheduledAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
     }
-    @Test void eachInstallmentKeepsItsOwnPayerWhenSavedAndRevised() {
+    @Test void onlyPaidInstallmentsKeepTheirPayerWhenSavedAndRevised() {
         var item=contract();
         var payers=List.of("신랑","신부","신부 측 부모님");
         var separate=java.util.stream.IntStream.range(0,3).mapToObj(i->{
@@ -68,7 +68,7 @@ class SharedBudgetTests {
         var saved=budgets.get(workspaceId,userId).payments();
         for(int i=0;i<3;i++) {
             final var stage=separate.get(i);
-            assertEquals(payers.get(i),saved.stream().filter(p->p.type().equals(stage.type())).findFirst().orElseThrow().payer());
+            assertEquals(stage.paid()?payers.get(i):"미정",saved.stream().filter(p->p.type().equals(stage.type())).findFirst().orElseThrow().payer());
         }
         var changed=new java.util.ArrayList<>(separate);
         var balance=separate.get(2);
@@ -79,6 +79,15 @@ class SharedBudgetTests {
         assertEquals("신랑",revised.stream().filter(p->p.type().equals("DEPOSIT")).findFirst().orElseThrow().payer());
         var paidBalance=revised.stream().filter(p->p.type().equals("BALANCE")).findFirst().orElseThrow();
         assertEquals("신랑 측 부모님",paidBalance.payer()); assertEquals("PAID",paidBalance.status());
+    }
+    @Test void scheduledPaymentGetsPayerOnlyWhenCompletedAndClearsItWhenReopened() {
+        var payment=budgets.addPayment(workspaceId,userId,new BudgetService.CreatePayment("기타","예정 결제","OTHER",new BigDecimal("10000"),day.minusDays(1),"신부",""));
+        assertEquals("미정",payment.payer());
+        var paid=budgets.complete(workspaceId,userId,payment.id(),new BigDecimal("10000"),day,"신랑");
+        assertEquals("신랑",paid.payer()); assertEquals("PAID",paid.status());
+        var record=paymentRecords.findById(payment.id()).orElseThrow();
+        record.revise(new BigDecimal("10000"),day,"신랑",false,null); paymentRecords.save(record);
+        assertEquals("미정",budgets.get(workspaceId,userId).payments().stream().filter(p->p.id().equals(payment.id())).findFirst().orElseThrow().payer());
     }
     @Test void totalChangeRequiresConfirmationAndUpdatesPackageBaseWithPaymentsAtomically() {
         var item=contract();
@@ -213,7 +222,7 @@ class SharedBudgetTests {
         planning.update(workspaceId,userId,item.id(),extraItem(null,"CONTRACTED",15000,day.plusDays(1)));
         var updated=budgets.get(workspaceId,userId).payments();
         assertEquals(1,updated.size()); assertEquals(first.id(),updated.getFirst().id()); assertEquals(day.plusDays(1),updated.getFirst().dueDate());
-        budgets.complete(workspaceId,userId,first.id(),new BigDecimal("15000"),day);
+        budgets.complete(workspaceId,userId,first.id(),new BigDecimal("15000"),day,"신부");
         planning.update(workspaceId,userId,item.id(),extraItem(null,"CONTRACTED",15000,day.plusDays(1)));
         assertEquals("PAID",budgets.get(workspaceId,userId).payments().getFirst().status());
         assertThrows(ResponseStatusException.class,()->planning.update(workspaceId,userId,item.id(),extraItem(null,"CONTRACTED",0,null)));
@@ -233,7 +242,7 @@ class SharedBudgetTests {
         var linked=planning.update(workspaceId,userId,helper.id(),new PlanningService.ChangeItem("본식","헬퍼","헬퍼 업체","CONTRACTED",null,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",parent.getId(),null,new BigDecimal("300000"),"헬퍼비",day));
         assertEquals(parent.getId(),linked.packageParentId());
         assertEquals("CANCELLED",paymentRecords.findById(balance.getId()).orElseThrow().getStatus());
-        assertThrows(ResponseStatusException.class,()->budgets.complete(workspaceId,userId,balance.getId(),new BigDecimal("300000"),day));
+        assertThrows(ResponseStatusException.class,()->budgets.complete(workspaceId,userId,balance.getId(),new BigDecimal("300000"),day,"신랑"));
         var extra=budgets.get(workspaceId,userId).payments().stream().filter(p->helper.id().equals(p.planningItemId())&&"EXTRA".equals(p.type())).toList();
         assertEquals(1,extra.size()); assertEquals(0,new BigDecimal("300000").compareTo(extra.getFirst().scheduledAmount()));
         assertTrue(items.findById(parent.getId()).orElseThrow().getPackageIncludedItems().contains("본식 헬퍼"));
@@ -243,7 +252,7 @@ class SharedBudgetTests {
         var parent=contract();
         var helper=planning.create(workspaceId,userId,extraItem(null,"CONTRACTED",300000,day));
         var balance=new com.marrymate.budget.domain.Payment(workspaceId,"스튜디오","개별 잔금","BALANCE",new BigDecimal("300000"),day,"신랑","");
-        balance.linkPlanningItem(helper.id()); balance.complete(new BigDecimal("100000"),day); paymentRecords.save(balance);
+        balance.linkPlanningItem(helper.id()); balance.complete(new BigDecimal("100000"),day,"신랑"); paymentRecords.save(balance);
         var failure=assertThrows(ResponseStatusException.class,()->planning.update(workspaceId,userId,helper.id(),extraItem(parent.getId(),"CONTRACTED",300000,day)));
         assertTrue(failure.getReason().contains("이미 납부"));
         assertNull(items.findById(helper.id()).orElseThrow().getPackageParentId());
@@ -253,7 +262,7 @@ class SharedBudgetTests {
         var parent=contract();
         var helper=planning.create(workspaceId,userId,extraItem(null,"CONTRACTED",300000,day));
         var balance=new com.marrymate.budget.domain.Payment(workspaceId,"스튜디오","개별 잔금","BALANCE",new BigDecimal("300000"),day,"신랑","");
-        balance.linkPlanningItem(helper.id()); balance.complete(new BigDecimal("100000"),day); paymentRecords.save(balance);
+        balance.linkPlanningItem(helper.id()); balance.complete(new BigDecimal("100000"),day,"신랑"); paymentRecords.save(balance);
         // Issue an authenticated session for this test user without touching production accounts.
         var token=auth.login(email,"test-password").token();
         var body="""
@@ -285,7 +294,7 @@ class SharedBudgetTests {
         assertEquals(0,new BigDecimal("1015000").compareTo(budget.payments().stream().map(BudgetService.PaymentView::scheduledAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
     }
     @Test void unrelatedUserCannotChangeContractPayments() {
-        var item=contract(); var other=auth.signup(UUID.randomUUID()+"@test.local","test-password","다른 사용자",null);
+        var item=contract(); var other=auth.signup(UUID.randomUUID()+"@test.local","test-password","다른 사용자");
         assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,other.user().id(),item.getId(),stages(day)));
     }
 }

@@ -29,7 +29,7 @@ async function request<T>(path: string, init: RequestInit = {}, session?: Sessio
 }
 
 export const api = {
-  signup: (email: string, password: string, nickname: string, weddingDate: string | null) => request<Session>('/api/v1/auth/signup', { method: 'POST', body: JSON.stringify({ email, password, nickname, weddingDate }) }),
+  signup: (email: string, password: string, nickname: string) => request<Session>('/api/v1/auth/signup', { method: 'POST', body: JSON.stringify({ email, password, nickname }) }),
   login: (email: string, password: string) => request<Session>('/api/v1/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   changePassword: (session: Session, currentPassword: string, newPassword: string) => request<Session>('/api/v1/auth/me/password', {method:'PATCH',body:JSON.stringify({currentPassword,newPassword})},session),
   logout: (session: Session) => request<void>('/api/v1/auth/logout', {method:'POST'},session),
@@ -37,6 +37,7 @@ export const api = {
   updateProfile: (session: Session, nickname: string) => request<Session['user']>('/api/v1/auth/me', { method: 'PATCH', body: JSON.stringify({ nickname }) }, session),
   workspaces: (session: Session) => request<Workspace[]>('/api/v1/workspaces', {}, session),
   renameWorkspace: (session: Session, workspaceId: number, name: string, weddingDate: string | null, homeTitle: string, homeMessage: string) => request<Workspace>(`/api/v1/workspaces/${workspaceId}`, { method: 'PATCH', body: JSON.stringify({ name, weddingDate, homeTitle, homeMessage }) }, session),
+  createWorkspace: (session: Session, name: string, weddingDate: string | null) => request<Workspace>('/api/v1/workspaces', { method: 'POST', body: JSON.stringify({ name, weddingDate }) }, session),
   invite: (session: Session) => request<{ inviteCode: string }> (`/api/v1/workspaces/${session.workspaceId}/invites`, { method: 'POST' }, session),
   join: (session: Session, inviteCode: string) => request<Workspace>('/api/v1/workspaces/join', { method: 'POST', body: JSON.stringify({ inviteCode }) }, session),
   budget: (session: Session) => request<Budget>('/api/v1/budget', {}, session),
@@ -44,7 +45,7 @@ export const api = {
   preferences: (session: Session, body: { includeHoneymoon: boolean; includeGifts: boolean; giftAmount: number }) => request<Budget>('/api/v1/budget/preferences', { method: 'PUT', body: JSON.stringify(body) }, session),
   contract: (session: Session, id: number, stages: { type: PaymentType; amount: number; date: string | null; paid: boolean; paidDate: string | null; payer: string }[], revisedTotal?: number) => request<Budget>(`/api/v1/budget/contracts/${id}`, { method: 'PUT', body: JSON.stringify({ stages, revisedTotal }) }, session),
   addPayment: (session: Session, body: { category: string; title: string; type: PaymentType; scheduledAmount: number; dueDate: string; payer: string; memo: string }) => request<Payment>('/api/v1/budget/payments', { method: 'POST', body: JSON.stringify(body) }, session),
-  completePayment: (session: Session, id: string | number, actualAmount: number, paidDate: string) => request<Payment>(`/api/v1/budget/payments/${id}/complete`, { method: 'PATCH', body: JSON.stringify({ actualAmount, paidDate }) }, session),
+  completePayment: (session: Session, id: string | number, actualAmount: number, paidDate: string, payer: string) => request<Payment>(`/api/v1/budget/payments/${id}/complete`, { method: 'PATCH', body: JSON.stringify({ actualAmount, paidDate, payer }) }, session),
   planningItems: (session: Session) => request<PlanningItem[]>('/api/v1/planning-items', {}, session),
   addPlanningItem: (session: Session, body: PlanningItemInput) => request<PlanningItem>('/api/v1/planning-items', { method: 'POST', body: JSON.stringify(body) }, session),
   updatePlanningItem: (session: Session, id: number, body: PlanningItemInput) => request<PlanningItem>(`/api/v1/planning-items/${id}`, { method: 'PUT', body: JSON.stringify(body) }, session),

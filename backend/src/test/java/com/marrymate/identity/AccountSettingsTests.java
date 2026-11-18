@@ -26,7 +26,30 @@ class AccountSettingsTests {
     @Autowired BudgetService budgets;
 
     AuthService.SessionView signup() {
-        return auth.signup(UUID.randomUUID()+"@test.local","old-password","테스트",null);
+        var account=auth.signup(UUID.randomUUID()+"@test.local","old-password","테스트");
+        var workspace=workspaces.create(account.user().id(),"테스트의 결혼 준비",null);
+        return new AuthService.SessionView(account.token(),account.user(),workspace.id());
+    }
+    @Test void newAccountChoosesASpaceAndCanResumeAfterLoggingInAgain() {
+        var user=auth.signup(UUID.randomUUID()+"@test.local","old-password","새 사용자");
+        assertNull(user.workspaceId()); assertTrue(workspaces.list(user.user().id()).isEmpty());
+        assertNull(auth.login(user.user().email(),"old-password").workspaceId());
+        var space=workspaces.create(user.user().id(),"  우리의 첫 기록  ",null);
+        assertEquals("우리의 첫 기록",space.name()); assertEquals("OWNER",space.role()); assertNull(space.weddingDate());
+        assertEquals(space.id(),auth.login(user.user().email(),"old-password").workspaceId());
+        assertEquals(1,workspaces.list(user.user().id()).size());
+        assertEquals(0,BigDecimal.ZERO.compareTo(budgets.get(space.id(),user.user().id()).targetAmount()));
+    }
+    @Test void invitedNewAccountJoinsWithoutCreatingAnUnusedPersonalSpace() {
+        var owner=signup();
+        var user=auth.signup(UUID.randomUUID()+"@test.local","old-password","초대받은 사용자");
+        assertThrows(ResponseStatusException.class,()->workspaces.join(user.user().id(),"INVALID1"));
+        assertTrue(workspaces.list(user.user().id()).isEmpty());
+        var code=workspaces.invite(owner.workspaceId(),owner.user().id()).inviteCode();
+        var joined=workspaces.join(user.user().id(),"  "+code.toLowerCase()+"  ");
+        assertEquals(owner.workspaceId(),joined.id()); assertEquals("MEMBER",joined.role());
+        assertEquals(1,workspaces.list(user.user().id()).size());
+        assertEquals(joined.id(),auth.login(user.user().email(),"old-password").workspaceId());
     }
     @Test void passwordChangeRequiresCurrentPasswordAndRevokesOldSessions() {
         var user=signup();

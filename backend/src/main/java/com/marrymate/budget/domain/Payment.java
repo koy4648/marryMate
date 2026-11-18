@@ -26,7 +26,7 @@ public class Payment {
     public Long getPlanningItemId() { return planningItemId; }
     public void linkPlanningItem(Long id) { planningItemId=id; }
     public void revise(BigDecimal amount, LocalDate date, String payer, boolean paid, LocalDate paidDate) {
-        scheduledAmount=amount; dueDate=date; this.payer=payer;
+        scheduledAmount=amount; dueDate=date; this.payer=paid ? payer : "미정";
         actualAmount=paid ? amount : BigDecimal.ZERO; this.paidDate=paid ? paidDate : null;
         status=paid ? "PAID" : "SCHEDULED"; updatedAt=Instant.now();
     }
@@ -42,13 +42,13 @@ public class Payment {
     protected Payment() {}
     public Payment(Long workspaceId, String category, String title, String type, BigDecimal scheduledAmount, LocalDate dueDate, String payer, String memo) {
         this.workspaceId = workspaceId; this.category = category; this.title = title; this.type = type; this.status = "SCHEDULED";
-        this.scheduledAmount = scheduledAmount; this.actualAmount = BigDecimal.ZERO; this.dueDate = dueDate; this.payer = payer; this.memo = memo == null ? "" : memo;
+        this.scheduledAmount = scheduledAmount; this.actualAmount = BigDecimal.ZERO; this.dueDate = dueDate; this.payer = "미정"; this.memo = memo == null ? "" : memo;
         this.createdAt = Instant.now(); this.updatedAt = this.createdAt;
     }
     public Long getId() { return id; } public String getCategory() { return category; } public String getTitle() { return title; }
     public String getType() { return type; } public String getStatus() { return status; } public BigDecimal getScheduledAmount() { return scheduledAmount; }
     public BigDecimal getActualAmount() { return actualAmount; } public LocalDate getDueDate() { return dueDate; } public LocalDate getPaidDate() { return paidDate; }
-    public String getPayer() { return payer; } public String getMemo() { return memo; }
-    public void complete(BigDecimal actualAmount, LocalDate paidDate) { this.actualAmount = actualAmount; this.paidDate = paidDate; this.status = actualAmount.compareTo(scheduledAmount) < 0 ? "PARTIALLY_PAID" : "PAID"; this.updatedAt = Instant.now(); }
+    public String getPayer() { return "PAID".equals(status) || "REFUNDED".equals(status) ? payer : "미정"; } public String getMemo() { return memo; }
+    public void complete(BigDecimal actualAmount, LocalDate paidDate, String payer) { this.actualAmount = actualAmount; this.paidDate = paidDate; this.status = actualAmount.compareTo(scheduledAmount) < 0 ? "PARTIALLY_PAID" : "PAID"; this.payer="PAID".equals(status)?payer:"미정"; this.updatedAt = Instant.now(); }
 }
 

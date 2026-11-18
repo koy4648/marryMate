@@ -21,7 +21,7 @@ export function contractSchedule(item: PlanningItem, payments: Payment[], today:
         date: existing?.dueDate ?? (!hasSavedSchedule && index === 0 ? today : ''),
         status: existing?.status === 'PAID' ? 'PAID' : 'SCHEDULED',
         paidDate: existing?.paidDate ?? (hasSavedSchedule ? '' : today),
-        payer: existing?.payer ?? '공동',
+        payer: existing?.status === 'PAID' ? existing.payer : '미정',
       }
     }),
   }

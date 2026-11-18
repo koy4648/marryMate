@@ -1,5 +1,5 @@
 import type { SortState } from './sorting'
-export type ChecklistLayout = { order:string[]; sorts:Record<string,SortState>; separateCompleted?:boolean }
+export type ChecklistLayout = { order:string[]; sorts:Record<string,SortState> }
 export const checklistLayoutsStorageKey='marry-mate:v2:checklist-layouts'
 export function checklistLayoutKey(userId:number,workspaceId:number) { return `${userId}:${workspaceId}` }
 export function readChecklistLayouts(raw:string|null):Record<string,ChecklistLayout> {
@@ -12,7 +12,7 @@ export function readChecklistLayouts(raw:string|null):Record<string,ChecklistLay
       for(const [group,sort] of Object.entries(entry.sorts??{})) {
         if(sort&&['default','amount','dueDate','payer','visitDate','name'].includes(sort.key)&&typeof sort.ascending==='boolean')sorts[group]=sort
       }
-      result[key]={separateCompleted:entry.separateCompleted===true,order:Array.isArray(entry.order)?entry.order.filter(name=>typeof name==='string'):[],sorts}
+      result[key]={order:Array.isArray(entry.order)?entry.order.filter(name=>typeof name==='string'):[],sorts}
     }
     return result
   }catch{return {}}
