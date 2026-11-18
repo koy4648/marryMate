@@ -21,11 +21,15 @@ public class BudgetService {
         return contract(workspaceId,userId,itemId,stages,null);
     }
     @Transactional public BudgetView contract(Long workspaceId, Long userId, Long itemId, List<ContractStage> stages, BigDecimal revisedTotal) {
+        return contract(workspaceId,userId,itemId,stages,revisedTotal,null);
+    }
+    @Transactional public BudgetView contract(Long workspaceId, Long userId, Long itemId, List<ContractStage> stages, BigDecimal revisedTotal, VenueTerms venueTerms) {
         workspaces.requireMember(workspaceId,userId);
         var item=planning.findByIdAndWorkspaceId(itemId,workspaceId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"계약을 찾지 못했어요."));
         if(item.getPackageParentId()!=null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"패키지 계약에서 결제를 관리해 주세요.");
         if(stages.size()!=3 || stages.stream().map(ContractStage::type).distinct().count()!=3) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"계약금·중도금·잔금을 각각 입력해 주세요.");
         if(!java.util.List.of("CONTRACTED","DONE").contains(item.getStatus())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"업체를 확정한 뒤 결제를 연결해 주세요.");
+        if(venueTerms!=null) item.changeVenueTerms(venueTerms.mealPrice(),venueTerms.guarantee(),venueTerms.rentalFee());
         BigDecimal expected=item.isPackageContract()?item.getPackageBaseAmount():item.getQuotedAmount();
         if("웨딩홀".equals(item.getServiceGroup()) && item.getContractAmountOverride()==null) {
             var consultation=reviews.findAllByWorkspaceIdOrderByCreatedAtDesc(workspaceId).stream().filter(r->itemId.equals(r.getPlanningItemId()) && "CONSULTATION".equals(r.getReviewType())).findFirst();
@@ -33,6 +37,7 @@ public class BudgetService {
         }
         if(item.getContractAmountOverride()!=null && "웨딩홀".equals(item.getServiceGroup())) expected=item.getContractAmountOverride();
         BigDecimal total=stages.stream().map(ContractStage::amount).reduce(BigDecimal.ZERO,BigDecimal::add);
+        if(venueTerms!=null && revisedTotal!=null && revisedTotal.compareTo(expected)!=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"변경할 총액을 식대·보증인원·대관료 합계와 맞춰주세요.");
         if(revisedTotal!=null) {
             if(revisedTotal.signum()<=0 || revisedTotal.precision()>15 || revisedTotal.stripTrailingZeros().scale()>0 || revisedTotal.compareTo(total)!=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"변경할 총액은 납입 합계와 같고 0원보다 커야 해요.");
             item.reviseContractAmount(revisedTotal); expected=revisedTotal;
@@ -50,6 +55,7 @@ public class BudgetService {
         }
         return view(workspaceId);
     }
+    public record VenueTerms(@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero @jakarta.validation.constraints.Digits(integer=15,fraction=0) BigDecimal mealPrice,@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero Integer guarantee,@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero @jakarta.validation.constraints.Digits(integer=15,fraction=0) BigDecimal rentalFee) {}
     public record ContractStage(@jakarta.validation.constraints.Pattern(regexp="DEPOSIT|INTERIM|BALANCE") @jakarta.validation.constraints.NotNull String type,@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero @jakarta.validation.constraints.Digits(integer=15,fraction=0) BigDecimal amount,LocalDate date,boolean paid,LocalDate paidDate,@jakarta.validation.constraints.NotBlank String payer) {}
     private BudgetView view(Long workspaceId){BudgetPlan plan=budgets.findByWorkspaceId(workspaceId).orElse(new BudgetPlan(workspaceId)); BigDecimal target=plan.getTargetAmount(); List<PaymentView> items=payments.findAllByWorkspaceIdOrderByDueDateAsc(workspaceId).stream().map(PaymentView::from).toList(); return new BudgetView(target,items,plan.isIncludeHoneymoon(),plan.isIncludeGifts(),plan.getGiftAmount());}
     public record CreatePayment(String category,String title,String type,BigDecimal scheduledAmount,LocalDate dueDate,String payer,String memo){}

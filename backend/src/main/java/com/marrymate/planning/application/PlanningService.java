@@ -18,9 +18,9 @@ public class PlanningService {
         new Template("웨딩홀", "웨딩홀 투어"),
         new Template("플래너", "웨딩 플래너"),
         new Template("본식 촬영", "본식 스냅·원판"), new Template("본식 촬영", "DVD"), new Template("본식 촬영", "아이폰 스냅"),
-        new Template("스튜디오", "촬영 작가"), new Template("스튜디오", "헬퍼"), new Template("스튜디오", "헤어변형"),
-        new Template("스튜디오", "헤어"), new Template("스튜디오", "메이크업"), new Template("스튜디오", "스튜디오 대여"),
-        new Template("스튜디오", "드레스"), new Template("스튜디오", "예복"),
+        new Template("스튜디오 촬영", "촬영 작가"), new Template("스튜디오 촬영", "헬퍼"), new Template("스튜디오 촬영", "헤어변형"),
+        new Template("스튜디오 촬영", "헤어"), new Template("스튜디오 촬영", "메이크업"), new Template("스튜디오 촬영", "스튜디오 대여"),
+        new Template("스튜디오 촬영", "드레스"), new Template("스튜디오 촬영", "예복"),
         new Template("본식", "헬퍼"), new Template("본식", "헤어·메이크업"), new Template("본식", "드레스"),
         new Template("본식", "예복"), new Template("본식", "혼주 한복"), new Template("본식", "아버지 예복"),
         new Template("본식", "혼주 헤어·메이크업"),
@@ -204,11 +204,11 @@ public class PlanningService {
                            LocalDate scheduleDate, BigDecimal quotedAmount, BigDecimal actualAmount, Integer rating,
                            boolean packageContract, BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount,
                            String packageIncludedItems, String packageAdditionalDetails, String reviewType,
-                           String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime, BigDecimal extraAmount, String extraDetails, LocalDate extraDueDate, BigDecimal contractAmountOverride) {
+                           String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime, BigDecimal extraAmount, String extraDetails, LocalDate extraDueDate, BigDecimal contractAmountOverride, BigDecimal venueMealPrice, Integer venueGuarantee, BigDecimal venueRentalFee) {
         static ItemView from(PlanningItem item) { return new ItemView(item.getId(), item.getServiceGroup(), item.getItemName(),
             item.getVendorName(), item.getStatus(), item.getScheduleDate(), item.getQuotedAmount(), item.getActualAmount(),
             item.getRating(), item.isPackageContract(), item.getPackageBaseAmount(), item.getPackageAdditionalAmount(),
             item.getPackageIncludedItems(), item.getPackageAdditionalDetails(), item.getReviewType(), item.getReview(),
-            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId(), item.getScheduleTime(), item.getExtraAmount(), item.getExtraDetails(), item.getExtraDueDate(), item.getContractAmountOverride()); }
+            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId(), item.getScheduleTime(), item.getExtraAmount(), item.getExtraDetails(), item.getExtraDueDate(), item.getContractAmountOverride(), item.getVenueMealPrice(), item.getVenueGuarantee(), item.getVenueRentalFee()); }
     }
 }

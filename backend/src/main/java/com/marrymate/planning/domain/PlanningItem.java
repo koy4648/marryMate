@@ -19,6 +19,19 @@ public class PlanningItem {
     @Column(name = "schedule_time") private LocalTime scheduleTime;
     @Column(name = "quoted_amount", nullable = false, precision = 15, scale = 0) private BigDecimal quotedAmount;
     @Column(name = "contract_amount_override", precision = 15, scale = 0) private BigDecimal contractAmountOverride;
+    @Column(name="venue_meal_price",precision=15,scale=0) private BigDecimal venueMealPrice;
+    @Column(name="venue_guarantee") private Integer venueGuarantee;
+    @Column(name="venue_rental_fee",precision=15,scale=0) private BigDecimal venueRentalFee;
+    public BigDecimal getVenueMealPrice() { return venueMealPrice; }
+    public Integer getVenueGuarantee() { return venueGuarantee; }
+    public BigDecimal getVenueRentalFee() { return venueRentalFee; }
+    public void changeVenueTerms(BigDecimal mealPrice,Integer guarantee,BigDecimal rentalFee) {
+        if(!"웨딩홀".equals(serviceGroup) || mealPrice==null || guarantee==null || rentalFee==null || mealPrice.signum()<0 || guarantee<0 || rentalFee.signum()<0 || mealPrice.precision()>15 || rentalFee.precision()>15 || mealPrice.stripTrailingZeros().scale()>0 || rentalFee.stripTrailingZeros().scale()>0) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"식대·보증인원·대관료를 0 이상의 정수로 입력해 주세요.");
+        BigDecimal total=mealPrice.multiply(BigDecimal.valueOf(guarantee)).add(rentalFee);
+        if(total.signum()<=0 || total.precision()>15) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"웨딩홀 총액은 0원보다 크고 15자리 이하여야 해요.");
+        venueMealPrice=mealPrice; venueGuarantee=guarantee; venueRentalFee=rentalFee;
+        reviseContractAmount(total);
+    }
     @Column(name = "actual_amount", nullable = false, precision = 15, scale = 0) private BigDecimal actualAmount;
     @Column(name = "package_contract", nullable = false) private boolean packageContract;
     @Column(name = "package_base_amount", nullable = false, precision = 15, scale = 0) private BigDecimal packageBaseAmount;

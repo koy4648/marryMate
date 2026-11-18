@@ -803,3 +803,11 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
 @media(prefers-reduced-motion:reduce) { .space-choices>button { transition:none; } }
 .hero.space-cover::before { width:auto; height:auto; transform:none; background:transparent; border:1px solid #c4d0ab50; }
 .hero.space-cover>.space-cover-binding { position:absolute; z-index:0; }
+.venue-contract-cost { margin:0 0 24px; padding:20px; border:1px solid #bac8b0; border-radius:6px; background:#eef2e7; }
+.venue-contract-cost h3 { margin:0; font:22px 'Gowun Batang',serif; }
+.venue-contract-cost p { margin:8px 0 0; font-size:11px; line-height:1.7; }
+.venue-contract-cost .section-heading { margin-bottom:18px; }
+.venue-cost-summary { display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; margin:18px 0; padding:14px 0; border-top:1px solid #c9d3bf; border-bottom:1px solid #c9d3bf; }
+.venue-cost-summary span { font-size:11px; }
+.venue-cost-summary strong { font-size:18px; }
+.venue-contract-cost>small { display:block; margin-top:12px; font-size:10px; color:var(--muted); line-height:1.8; }

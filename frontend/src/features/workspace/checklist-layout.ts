@@ -8,11 +8,11 @@ export function readChecklistLayouts(raw:string|null):Record<string,ChecklistLay
     if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return result
     for(const [key,value] of Object.entries(parsed)) {
       if(!value||typeof value!=='object')continue
-      const entry=value as Partial<ChecklistLayout>; const sorts:Record<string,SortState>={}
+      const entry=value as Partial<ChecklistLayout>; const groupName=(name:string)=>name==='스튜디오'?'스튜디오 촬영':name; const sorts:Record<string,SortState>={}
       for(const [group,sort] of Object.entries(entry.sorts??{})) {
-        if(sort&&['default','amount','dueDate','payer','visitDate','name'].includes(sort.key)&&typeof sort.ascending==='boolean')sorts[group]=sort
+        if(sort&&['default','amount','dueDate','payer','visitDate','name'].includes(sort.key)&&typeof sort.ascending==='boolean')sorts[groupName(group)]=sort
       }
-      result[key]={order:Array.isArray(entry.order)?entry.order.filter(name=>typeof name==='string'):[],sorts}
+      result[key]={order:Array.isArray(entry.order)?entry.order.filter(name=>typeof name==='string').map(groupName):[],sorts}
     }
     return result
   }catch{return {}}

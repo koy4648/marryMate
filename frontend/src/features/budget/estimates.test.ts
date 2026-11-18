@@ -3,11 +3,11 @@ import { budgetEstimates, packageFor, itemQuote, contractPayments, contractBaseA
 import { formatWon, parseWon, type Payment } from './budget'
 import type { PlanningItem } from '../planning/planning'
 const item = (id: number, change: Partial<PlanningItem> = {}): PlanningItem => ({
-  id, serviceGroup: '스튜디오', itemName: '드레스', vendorName: `업체 ${id}`, status: 'RESEARCHING', scheduleDate: null,
+  id, serviceGroup: '스튜디오 촬영', itemName: '드레스', vendorName: `업체 ${id}`, status: 'RESEARCHING', scheduleDate: null,
   quotedAmount: 3200800, actualAmount: 0, packageContract: false, packageBaseAmount: 0, packageAdditionalAmount: 0,
   packageIncludedItems: '', packageAdditionalDetails: '', rating: null, reviewType: 'NONE', review: '', pros: '', cons: '', memo: '', ...change,
 })
-const payment: Payment = { id: 1, planningItemId: 1, title: '계약금', category: '스튜디오', type: 'DEPOSIT', scheduledAmount: 320080, actualAmount: 320080, dueDate: '2026-11-20', paidDate: '2026-11-18', payer: '공동', status: 'PAID' }
+const payment: Payment = { id: 1, planningItemId: 1, title: '계약금', category: '스튜디오 촬영', type: 'DEPOSIT', scheduledAmount: 320080, actualAmount: 320080, dueDate: '2026-11-20', paidDate: '2026-11-18', payer: '공동', status: 'PAID' }
 
 describe('shared estimates', () => {
   it('accepts an exact won amount and displays comma grouping', () => {
