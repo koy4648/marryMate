@@ -647,3 +647,11 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
 
 .vendor-schedule { color:var(--muted); font-size:11px; line-height:1.6; }
 .vendor-schedule:empty { display:none; }
+
+.editor-grid .visit-datetime { margin:0; padding:0; min-width:0; border:0; }
+.visit-datetime legend { margin-bottom:8px; padding:0; font-size:11px; color:var(--muted); }
+.visit-datetime-inputs { display:grid; grid-template-columns:minmax(0,1.4fr) 1px minmax(0,1fr); align-items:center; border:1px solid var(--line); background:var(--paper); }
+.editor-grid .visit-datetime-inputs input { width:100%; min-width:0; margin:0; padding:12px 9px; border:0; border-radius:0; background:transparent; }
+.visit-datetime-inputs>span { height:22px; background:var(--line); }
+.visit-datetime-inputs:focus-within { outline:2px solid var(--sage); outline-offset:2px; }
+.visit-datetime small { display:block; margin-top:7px; color:var(--muted); font-size:10px; line-height:1.6; }
