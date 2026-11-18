@@ -52,6 +52,29 @@ class SharedBudgetTests {
         assertTrue(updated.payments().stream().allMatch(p->p.planningItemId().equals(item.getId()) && p.dueDate().equals(day.plusDays(10))));
         assertEquals(0,new BigDecimal("3200800").compareTo(updated.payments().stream().map(BudgetService.PaymentView::scheduledAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
     }
+    @Test void eachInstallmentKeepsItsOwnPayerWhenSavedAndRevised() {
+        var item=contract();
+        var payers=List.of("신랑","신부","신부 측 부모님");
+        var separate=java.util.stream.IntStream.range(0,3).mapToObj(i->{
+            var stage=stages(day).get(i);
+            return new BudgetService.ContractStage(stage.type(),stage.amount(),stage.date(),stage.paid(),stage.paidDate(),payers.get(i));
+        }).toList();
+        budgets.contract(workspaceId,userId,item.getId(),separate);
+        var saved=budgets.get(workspaceId,userId).payments();
+        for(int i=0;i<3;i++) {
+            final var stage=separate.get(i);
+            assertEquals(payers.get(i),saved.stream().filter(p->p.type().equals(stage.type())).findFirst().orElseThrow().payer());
+        }
+        var changed=new java.util.ArrayList<>(separate);
+        var balance=separate.get(2);
+        changed.set(2,new BudgetService.ContractStage(balance.type(),balance.amount(),day,true,day,"신랑 측 부모님"));
+        budgets.contract(workspaceId,userId,item.getId(),changed);
+        var revised=budgets.get(workspaceId,userId).payments();
+        assertEquals(3,revised.size());
+        assertEquals("신랑",revised.stream().filter(p->p.type().equals("DEPOSIT")).findFirst().orElseThrow().payer());
+        var paidBalance=revised.stream().filter(p->p.type().equals("BALANCE")).findFirst().orElseThrow();
+        assertEquals("신랑 측 부모님",paidBalance.payer()); assertEquals("PAID",paidBalance.status());
+    }
     @Test void invalidBatchDoesNotLeaveHalfSavedPayments() {
         var item=contract();
         var drafts=new java.util.ArrayList<>(stages(day));

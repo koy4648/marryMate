@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { budgetEstimates, packageFor, itemQuote } from './estimates'
+import { budgetEstimates, packageFor, itemQuote, contractPayments } from './estimates'
 import { formatWon, parseWon, type Payment } from './budget'
 import type { PlanningItem } from '../planning/planning'
 const item = (id: number, change: Partial<PlanningItem> = {}): PlanningItem => ({
@@ -79,5 +79,24 @@ describe('settled estimates',()=>{
     expect(isEstimateSettled({planned:1500,linked:[paid]})).toBe(false)
     expect(isEstimateSettled({planned:1000,linked:[{...paid,status:'PARTIALLY_PAID',actualAmount:500}]})).toBe(false)
     expect(isEstimateSettled({planned:0,linked:[]})).toBe(false)
+  })
+})
+
+describe('contract-only budget', () => {
+  it('shows every contracted vendor independently, including zero quotes and paid contracts', () => {
+    const items = [item(1, {status:'CONTRACTED'}), item(2, {status:'CONTRACTED', quotedAmount:0}), item(3, {status:'DONE', vendorName:'트윈클링'}), item(4, {status:'RESEARCHING', vendorName:'더 화이트베일'})]
+    const entries = budgetEstimates(items, [], [{...payment, scheduledAmount:3200800, actualAmount:3200800}], true, true)
+    expect(entries.map(entry=>entry.item.id)).toEqual([1,2])
+    expect(entries[0].linked).toHaveLength(1)
+  })
+  it('counts package inclusions once and keeps other contracted vendors of the same kind', () => {
+    const items = [item(1, {status:'CONTRACTED', packageContract:true}), item(2, {status:'CONTRACTED', packageParentId:1}), item(3, {status:'CONTRACTED'})]
+    expect(budgetEstimates(items, [], [], true, true).map(entry=>entry.item.id)).toEqual([1,3])
+  })
+  it('filters linked payments by contract status while retaining package extras and manual payments', () => {
+    const items = [item(1, {status:'CONTRACTED', packageContract:true}), item(2, {packageParentId:1}), item(3, {status:'DONE'}), item(4)]
+    const payments = [payment, {...payment,id:2,planningItemId:2,type:'EXTRA' as const}, {...payment,id:3,planningItemId:3}, {...payment,id:4,planningItemId:4}, {...payment,id:5,planningItemId:null}, {...payment,id:6,planningItemId:99}]
+    expect(contractPayments(items,payments).map(payment=>payment.id)).toEqual([1,2,5])
+    expect(budgetEstimates([item(1,{serviceGroup:'신혼여행',status:'CONTRACTED'})],[],[],false,true)).toEqual([])
   })
 })

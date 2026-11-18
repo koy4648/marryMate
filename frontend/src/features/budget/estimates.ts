@@ -23,11 +23,11 @@ export function packageFor(item: PlanningItem, items: PlanningItem[]) {
 }
 
 // Each comparison contributes once: the selected vendor, or the lowest provisional quote.
-export function budgetEstimates(items: PlanningItem[], reviews: VenueReview[], payments: Payment[], includeHoneymoon: boolean) {
+export function budgetEstimates(items: PlanningItem[], reviews: VenueReview[], payments: Payment[], includeHoneymoon: boolean, confirmedOnly = false) {
   const includedKeys = new Set(items.filter(item => packageFor(item, items)).map(item => `${item.serviceGroup}|${item.itemName}`))
   const groups = new Map<string, PlanningItem[]>()
-  items.filter(item => item.status !== 'SKIPPED' && !packageFor(item, items) && (item.packageContract || !includedKeys.has(`${item.serviceGroup}|${item.itemName}`) || ['CONTRACTED','DONE'].includes(item.status)) && (includeHoneymoon || item.serviceGroup !== '신혼여행')).forEach(item => {
-    const key = item.packageContract ? `package-${item.id}` : `${item.serviceGroup}|${item.itemName}`
+  items.filter(item => (confirmedOnly ? item.status === 'CONTRACTED' : item.status !== 'SKIPPED') && !packageFor(item, items) && (item.packageContract || !includedKeys.has(`${item.serviceGroup}|${item.itemName}`) || ['CONTRACTED','DONE'].includes(item.status)) && (includeHoneymoon || item.serviceGroup !== '신혼여행')).forEach(item => {
+    const key = confirmedOnly || item.packageContract ? `package-${item.id}` : `${item.serviceGroup}|${item.itemName}`
     groups.set(key, [...groups.get(key) ?? [], item])
   })
   return [...groups.values()].flatMap(candidates => {
@@ -46,4 +46,15 @@ export function budgetEstimates(items: PlanningItem[], reviews: VenueReview[], p
 export function isEstimateSettled(entry:{planned:number;linked:Payment[]}) {
   const summary=summarizePayments(entry.linked)
   return entry.linked.some(payment=>payment.status==='PAID') && summary.remaining===0 && summary.pendingCount===0 && summary.paid>=entry.planned
+}
+
+// Unlinked ledger entries are manually recorded expenses; linked entries follow their contract.
+export function contractPayments(items: PlanningItem[], payments: Payment[]) {
+  return payments.filter(payment => {
+    if (payment.planningItemId == null) return true
+    const item = items.find(item => item.id === payment.planningItemId)
+    if (!item) return false
+    const contract = packageFor(item, items) ?? item
+    return contract.status === 'CONTRACTED'
+  })
 }
