@@ -2,6 +2,7 @@ package com.marrymate.planning.application;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -84,6 +85,7 @@ public class PlanningService {
     }
 
     private void apply(PlanningItem item, ChangeItem command) {
+        if(command.scheduleTime()!=null && command.scheduleDate()==null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"방문 시간을 입력하려면 날짜도 선택해 주세요.");
         if (command.packageParentId() != null) {
             PlanningItem parent = find(item.getWorkspaceId(), command.packageParentId());
             if (!parent.isPackageContract() || "SKIPPED".equals(parent.getStatus()) || parent.getPackageParentId()!=null || parent.getId().equals(item.getId()) || command.packageContract()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"포함 항목은 다른 패키지 계약에만 연결할 수 있어요.");
@@ -100,6 +102,7 @@ public class PlanningService {
         item.change(command.packageContract() ? "패키지" : command.serviceGroup(), command.itemName(), command.vendorName(), command.status(), command.scheduleDate(),
             command.packageParentId()!=null ? BigDecimal.ZERO : quote, command.packageParentId()!=null ? BigDecimal.ZERO : actual, command.packageContract(), packageBase, packageAdditional, command.packageIncludedItems(),
             command.packageAdditionalDetails(), command.rating(), command.reviewType(), command.review(), command.pros(), command.cons(), command.memo());
+        item.changeScheduleTime(command.scheduleTime());
         if(command.packageParentId()!=null) {
             PlanningItem parent=find(item.getWorkspaceId(),command.packageParentId());
             String label=PackageInclusions.labelFor(item.getServiceGroup(),item.getItemName());
@@ -109,7 +112,7 @@ public class PlanningService {
 
     private boolean untouched(PlanningItem item) {
         return item.getVendorName().isBlank() && "TODO".equals(item.getStatus()) && item.getQuotedAmount().signum()==0
-            && item.getActualAmount().signum()==0 && item.getScheduleDate()==null && item.getRating()==null
+            && item.getActualAmount().signum()==0 && item.getScheduleDate()==null && item.getScheduleTime()==null && item.getRating()==null
             && item.getReview().isBlank() && item.getMemo().isBlank() && item.getPros().isBlank() && item.getCons().isBlank()
             && !payments.existsByPlanningItemId(item.getId());
     }
@@ -159,16 +162,16 @@ public class PlanningService {
                              BigDecimal quotedAmount, BigDecimal actualAmount, boolean packageContract,
                              BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount, String packageIncludedItems,
                              String packageAdditionalDetails, Integer rating, String reviewType,
-                             String review, String pros, String cons, String memo, Long packageParentId) {}
+                             String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime) {}
     public record ItemView(Long id, String serviceGroup, String itemName, String vendorName, String status,
                            LocalDate scheduleDate, BigDecimal quotedAmount, BigDecimal actualAmount, Integer rating,
                            boolean packageContract, BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount,
                            String packageIncludedItems, String packageAdditionalDetails, String reviewType,
-                           String review, String pros, String cons, String memo, Long packageParentId) {
+                           String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime) {
         static ItemView from(PlanningItem item) { return new ItemView(item.getId(), item.getServiceGroup(), item.getItemName(),
             item.getVendorName(), item.getStatus(), item.getScheduleDate(), item.getQuotedAmount(), item.getActualAmount(),
             item.getRating(), item.isPackageContract(), item.getPackageBaseAmount(), item.getPackageAdditionalAmount(),
             item.getPackageIncludedItems(), item.getPackageAdditionalDetails(), item.getReviewType(), item.getReview(),
-            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId()); }
+            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId(), item.getScheduleTime()); }
     }
 }

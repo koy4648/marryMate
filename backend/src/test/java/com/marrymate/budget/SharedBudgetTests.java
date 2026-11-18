@@ -74,13 +74,13 @@ class SharedBudgetTests {
         assertEquals(parent.getId(),child.packageParentId());
     }
     @Test void packagesUseOneCategoryRegardlessOfOriginalService() {
-        var saved=planning.create(workspaceId,userId,new PlanningService.ChangeItem("스튜디오","촬영 묶음","함께 업체","RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("3200800"),BigDecimal.ZERO,"스튜디오 드레스","",null,"NONE","","","","",null));
+        var saved=planning.create(workspaceId,userId,new PlanningService.ChangeItem("스튜디오","촬영 묶음","함께 업체","RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("3200800"),BigDecimal.ZERO,"스튜디오 드레스","",null,"NONE","","","","",null,null));
         assertEquals("패키지",saved.serviceGroup());
         assertEquals("촬영 묶음",saved.itemName());
         assertEquals(0,new BigDecimal("3200800").compareTo(saved.quotedAmount()));
     }
     PlanningService.ItemView packageWith(String vendor,String includes) {
-        return planning.create(workspaceId,userId,new PlanningService.ChangeItem("패키지","웨딩 패키지",vendor,"RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("1130000"),BigDecimal.ZERO,includes,"",null,"NONE","","","","",null));
+        return planning.create(workspaceId,userId,new PlanningService.ChangeItem("패키지","웨딩 패키지",vendor,"RESEARCHING",null,BigDecimal.ZERO,BigDecimal.ZERO,true,new BigDecimal("1130000"),BigDecimal.ZERO,includes,"",null,"NONE","","","","",null,null));
     }
     @Test void packagesWithTheSameNameHaveTheirOwnItemsAndAreNotCompetingCandidates() {
         planning.list(workspaceId,userId);
@@ -96,15 +96,15 @@ class SharedBudgetTests {
     @Test void removingInclusionPreservesRecordedPreparationButUnlinksIt() {
         var parent=packageWith("다이렉트","DVD|아이폰 스냅");
         var child=planning.list(workspaceId,userId).stream().filter(i->parent.id().equals(i.packageParentId())&&i.itemName().equals("DVD")).findFirst().orElseThrow();
-        planning.update(workspaceId,userId,child.id(),new PlanningService.ChangeItem(child.serviceGroup(),child.itemName(),"촬영 업체","SCHEDULED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 기록",parent.id()));
-        planning.update(workspaceId,userId,parent.id(),new PlanningService.ChangeItem("패키지",parent.itemName(),parent.vendorName(),parent.status(),null,BigDecimal.ZERO,BigDecimal.ZERO,true,parent.packageBaseAmount(),BigDecimal.ZERO,"아이폰 스냅","",null,"NONE","","","","",null));
+        planning.update(workspaceId,userId,child.id(),new PlanningService.ChangeItem(child.serviceGroup(),child.itemName(),"촬영 업체","SCHEDULED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 기록",parent.id(),null));
+        planning.update(workspaceId,userId,parent.id(),new PlanningService.ChangeItem("패키지",parent.itemName(),parent.vendorName(),parent.status(),null,BigDecimal.ZERO,BigDecimal.ZERO,true,parent.packageBaseAmount(),BigDecimal.ZERO,"아이폰 스냅","",null,"NONE","","","","",null,null));
         var saved=items.findById(child.id()).orElseThrow();
         assertNull(saved.getPackageParentId()); assertEquals("방문 기록",saved.getMemo()); assertEquals(day,saved.getScheduleDate());
     }
     @Test void assigningRecordedItemToPackageReplacesOnlyBlankGeneratedPlaceholder() {
         var parent=packageWith("다이렉트","본식 헤어·메이크업");
-        var recorded=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",null));
-        planning.update(workspaceId,userId,recorded.id(),new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,new BigDecimal("100000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",parent.id()));
+        var recorded=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",null,null));
+        planning.update(workspaceId,userId,recorded.id(),new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,new BigDecimal("100000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",parent.id(),null));
         var linked=planning.list(workspaceId,userId).stream().filter(i->parent.id().equals(i.packageParentId())).toList();
         assertEquals(1,linked.size()); assertEquals(recorded.id(),linked.getFirst().id());
         assertEquals(day,linked.getFirst().scheduleDate()); assertEquals("방문 메모",linked.getFirst().memo());
@@ -112,10 +112,27 @@ class SharedBudgetTests {
     }
     @Test void assigningKnownPreparationItemAlsoUpdatesParentInclusions() {
         var parent=packageWith("다이렉트","DVD");
-        var linked=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",parent.id()));
+        var linked=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",parent.id(),null));
         assertEquals(parent.id(),linked.packageParentId());
         assertTrue(items.findById(parent.id()).orElseThrow().getPackageIncludedItems().contains("본식 헤어·메이크업"));
         assertEquals(2,planning.list(workspaceId,userId).stream().filter(i->parent.id().equals(i.packageParentId())).count());
+    }
+    PlanningService.ChangeItem visit(LocalDate date,java.time.LocalTime time) {
+        return new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","SCHEDULED",date,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",null,time);
+    }
+    @Test void visitTimePersistsAndCanBeChangedOrClearedWithoutChangingTheDate() {
+        var morning=java.time.LocalTime.of(6,30);
+        var saved=planning.create(workspaceId,userId,visit(day,morning));
+        assertEquals(morning,items.findById(saved.id()).orElseThrow().getScheduleTime());
+        assertEquals(morning,planning.list(workspaceId,userId).stream().filter(i->i.id().equals(saved.id())).findFirst().orElseThrow().scheduleTime());
+        var changed=planning.update(workspaceId,userId,saved.id(),visit(day,java.time.LocalTime.of(21,5)));
+        assertEquals(java.time.LocalTime.of(21,5),changed.scheduleTime());
+        var cleared=planning.update(workspaceId,userId,saved.id(),visit(day,null));
+        assertNull(cleared.scheduleTime()); assertEquals(day,cleared.scheduleDate()); assertEquals("방문 메모",cleared.memo());
+    }
+    @Test void aVisitTimeRequiresADate() {
+        assertThrows(ResponseStatusException.class,()->planning.create(workspaceId,userId,visit(null,java.time.LocalTime.NOON)));
+        assertFalse(items.existsByWorkspaceId(workspaceId));
     }
     @Test void unrelatedUserCannotChangeContractPayments() {
         var item=contract(); var other=auth.signup(UUID.randomUUID()+"@test.local","test-password","다른 사용자",null);

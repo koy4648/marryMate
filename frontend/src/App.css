@@ -644,3 +644,6 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
 .package-membership label { display:grid; gap:10px; font-weight:600; font-size:13px; }
 .package-membership select { width:100%; min-height:44px; padding:10px 12px; color:var(--ink); background:var(--paper); border:1px solid var(--line); font:inherit; }
 .package-membership p,.package-membership small { margin:10px 0 0; font-size:11px; line-height:1.8; color:var(--muted); }
+
+.vendor-schedule { color:var(--muted); font-size:11px; line-height:1.6; }
+.vendor-schedule:empty { display:none; }

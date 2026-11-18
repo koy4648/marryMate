@@ -35,3 +35,17 @@ describe('shared calendar dates', () => {
     expect(events[0].detail).toContain('3,200,800원')
   })
 })
+
+
+describe('visit time', () => {
+  it('keeps the local time and orders visits before date-only reminders', () => {
+    const date='2026-11-18'
+    const events=calendarEvents([
+      {...item('SCHEDULED',date),id:1,scheduleTime:'14:30:00'},
+      {...item('SCHEDULED',date),id:2,scheduleTime:null},
+      {...item('SCHEDULED',date),id:3,scheduleTime:'06:30:00'},
+    ],[])
+    expect(events.map(event=>[event.id,event.time])).toEqual([['plan-3','06:30'],['plan-1','14:30'],['plan-2',null]])
+    expect(events.every(event=>event.date===date)).toBe(true)
+  })
+})

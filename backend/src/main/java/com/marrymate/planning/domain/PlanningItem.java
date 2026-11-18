@@ -3,6 +3,7 @@ package com.marrymate.planning.domain;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import jakarta.persistence.*;
 
 @Entity
@@ -15,6 +16,7 @@ public class PlanningItem {
     @Column(name = "vendor_name", nullable = false, length = 160) private String vendorName;
     @Column(nullable = false, length = 30) private String status;
     @Column(name = "schedule_date") private LocalDate scheduleDate;
+    @Column(name = "schedule_time") private LocalTime scheduleTime;
     @Column(name = "quoted_amount", nullable = false, precision = 15, scale = 0) private BigDecimal quotedAmount;
     @Column(name = "actual_amount", nullable = false, precision = 15, scale = 0) private BigDecimal actualAmount;
     @Column(name = "package_contract", nullable = false) private boolean packageContract;
@@ -104,6 +106,8 @@ public class PlanningItem {
     public String getItemName() { return itemName; }
     public String getVendorName() { return vendorName; }
     public String getStatus() { return status; }
+    public LocalTime getScheduleTime() { return scheduleTime; }
+    public void changeScheduleTime(LocalTime time) { scheduleTime=time==null?null:time.withSecond(0).withNano(0); }
     public LocalDate getScheduleDate() { return scheduleDate; }
     public BigDecimal getQuotedAmount() { return quotedAmount; }
     public BigDecimal getActualAmount() { return actualAmount; }
