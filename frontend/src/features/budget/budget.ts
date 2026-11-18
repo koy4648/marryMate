@@ -90,5 +90,5 @@ export function parseWon(value: string) {
 
 
 export function filterCompletedPayments(payments:Payment[], showCompleted:boolean) {
-  return showCompleted ? payments : payments.filter(payment=>payment.status!=='PAID')
+  return payments.filter(payment=>payment.status!=='CANCELLED'&&(showCompleted||payment.status!=='PAID'))
 }

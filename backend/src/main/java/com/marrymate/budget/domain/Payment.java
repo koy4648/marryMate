@@ -35,6 +35,10 @@ public class Payment {
         this.status=actualAmount.signum()==0?"SCHEDULED":actualAmount.compareTo(amount)>=0?"PAID":"PARTIALLY_PAID";
         this.updatedAt=Instant.now();
     }
+    public void cancelScheduled() {
+        if(actualAmount.signum()>0 || "PAID".equals(status)) throw new IllegalStateException("납부 기록이 있는 결제는 취소할 수 없어요.");
+        status="CANCELLED"; updatedAt=Instant.now();
+    }
     protected Payment() {}
     public Payment(Long workspaceId, String category, String title, String type, BigDecimal scheduledAmount, LocalDate dueDate, String payer, String memo) {
         this.workspaceId = workspaceId; this.category = category; this.title = title; this.type = type; this.status = "SCHEDULED";

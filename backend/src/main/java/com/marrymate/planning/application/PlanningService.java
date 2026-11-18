@@ -93,7 +93,13 @@ public class PlanningService {
             PlanningItem parent = find(item.getWorkspaceId(), command.packageParentId());
             if (!parent.isPackageContract() || "SKIPPED".equals(parent.getStatus()) || parent.getPackageParentId()!=null || parent.getId().equals(item.getId()) || command.packageContract()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"포함 항목은 다른 패키지 계약에만 연결할 수 있어요.");
         }
-        if(command.packageParentId()!=null && item.getId()!=null && payments.findAllByWorkspaceIdOrderByDueDateAsc(item.getWorkspaceId()).stream().anyMatch(p->item.getId().equals(p.getPlanningItemId())&&!"EXTRA".equals(p.getType()))) throw new ResponseStatusException(HttpStatus.CONFLICT,"개별 결제가 연결된 항목은 패키지에 포함할 수 없어요.");
+        if(command.packageParentId()!=null && item.getId()!=null && !java.util.Objects.equals(item.getPackageParentId(),command.packageParentId())) {
+            var individual=payments.findAllByWorkspaceIdOrderByDueDateAsc(item.getWorkspaceId()).stream()
+                .filter(p->item.getId().equals(p.getPlanningItemId()) && !"EXTRA".equals(p.getType()) && !"CANCELLED".equals(p.getStatus())).toList();
+            if(individual.stream().anyMatch(p->p.getActualAmount().signum()>0 || "PAID".equals(p.getStatus()) || !java.util.List.of("DEPOSIT","INTERIM","BALANCE").contains(p.getType())))
+                throw new ResponseStatusException(HttpStatus.CONFLICT,"이미 납부했거나 별도 정산이 필요한 개별 결제가 있어요. 기존 납부 기록을 확인한 뒤 패키지에 연결해 주세요.");
+            individual.forEach(com.marrymate.budget.domain.Payment::cancelScheduled);
+        }
         if(!command.packageContract() && items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(item.getWorkspaceId()).stream().anyMatch(child->item.getId()!=null && item.getId().equals(child.getPackageParentId()))) throw new ResponseStatusException(HttpStatus.CONFLICT,"연결된 포함 항목을 개별 계약으로 변경한 뒤 패키지를 해제해 주세요.");
         item.linkPackage(command.packageParentId());
         BigDecimal quote = command.quotedAmount() == null ? BigDecimal.ZERO : command.quotedAmount();

@@ -18,7 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(properties={"spring.jpa.hibernate.ddl-auto=create-drop", "spring.datasource.url=jdbc:h2:mem:shared-budget;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE"})
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={"spring.jpa.hibernate.ddl-auto=create-drop", "spring.datasource.url=jdbc:h2:mem:shared-budget;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE"})
 @ActiveProfiles("test")
 class SharedBudgetTests {
     @Autowired AuthService auth;
@@ -26,13 +26,17 @@ class SharedBudgetTests {
     @Autowired WorkspaceService workspaces;
     @Autowired PlanningService planning;
     @Autowired PlanningItemRepository items;
+    @Autowired com.marrymate.budget.repository.PaymentRepository paymentRecords;
     @Autowired com.marrymate.planning.repository.VenueReviewRepository venueReviews;
+    @org.springframework.beans.factory.annotation.Value("${local.server.port}") int port;
     Long workspaceId;
     Long userId;
+    String email;
     LocalDate day=LocalDate.of(2026,11,18);
 
     @BeforeEach void setup() {
-        var session=auth.signup(UUID.randomUUID()+"@test.local","test-password","테스트",null);
+        email=UUID.randomUUID()+"@test.local";
+        var session=auth.signup(email,"test-password","테스트",null);
         workspaceId=session.workspaceId(); userId=session.user().id();
     }
     PlanningItem contract() {
@@ -220,6 +224,48 @@ class SharedBudgetTests {
         assertTrue(budgets.get(workspaceId,userId).payments().isEmpty());
         planning.selectCandidate(workspaceId,userId,item.id());
         assertEquals(1,budgets.get(workspaceId,userId).payments().size());
+    }
+    @Test void linkingHelperToPackageCancelsUnpaidIndividualBalanceAndKeepsExtra() {
+        var parent=contract();
+        var helper=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헬퍼","헬퍼 업체","CONTRACTED",null,new BigDecimal("300000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",null,null,new BigDecimal("300000"),"헬퍼비",day));
+        var balance=new com.marrymate.budget.domain.Payment(workspaceId,"본식","헬퍼 잔금","BALANCE",new BigDecimal("300000"),day,"신랑","");
+        balance.linkPlanningItem(helper.id()); paymentRecords.save(balance);
+        var linked=planning.update(workspaceId,userId,helper.id(),new PlanningService.ChangeItem("본식","헬퍼","헬퍼 업체","CONTRACTED",null,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",parent.getId(),null,new BigDecimal("300000"),"헬퍼비",day));
+        assertEquals(parent.getId(),linked.packageParentId());
+        assertEquals("CANCELLED",paymentRecords.findById(balance.getId()).orElseThrow().getStatus());
+        assertThrows(ResponseStatusException.class,()->budgets.complete(workspaceId,userId,balance.getId(),new BigDecimal("300000"),day));
+        var extra=budgets.get(workspaceId,userId).payments().stream().filter(p->helper.id().equals(p.planningItemId())&&"EXTRA".equals(p.type())).toList();
+        assertEquals(1,extra.size()); assertEquals(0,new BigDecimal("300000").compareTo(extra.getFirst().scheduledAmount()));
+        assertTrue(items.findById(parent.getId()).orElseThrow().getPackageIncludedItems().contains("본식 헬퍼"));
+        assertEquals(1,planning.list(workspaceId,userId).stream().filter(p->parent.getId().equals(p.packageParentId())&&p.itemName().equals("헬퍼")&&p.serviceGroup().equals("본식")).count());
+    }
+    @Test void paidIndividualBalanceBlocksLinkingWithoutChangingAnyRecords() {
+        var parent=contract();
+        var helper=planning.create(workspaceId,userId,extraItem(null,"CONTRACTED",300000,day));
+        var balance=new com.marrymate.budget.domain.Payment(workspaceId,"스튜디오","개별 잔금","BALANCE",new BigDecimal("300000"),day,"신랑","");
+        balance.linkPlanningItem(helper.id()); balance.complete(new BigDecimal("100000"),day); paymentRecords.save(balance);
+        var failure=assertThrows(ResponseStatusException.class,()->planning.update(workspaceId,userId,helper.id(),extraItem(parent.getId(),"CONTRACTED",300000,day)));
+        assertTrue(failure.getReason().contains("이미 납부"));
+        assertNull(items.findById(helper.id()).orElseThrow().getPackageParentId());
+        assertEquals("PARTIALLY_PAID",paymentRecords.findById(balance.getId()).orElseThrow().getStatus());
+    }
+    @Test void packageLinkingApiReturnsAUsefulReasonForPaidPayments() throws Exception {
+        var parent=contract();
+        var helper=planning.create(workspaceId,userId,extraItem(null,"CONTRACTED",300000,day));
+        var balance=new com.marrymate.budget.domain.Payment(workspaceId,"스튜디오","개별 잔금","BALANCE",new BigDecimal("300000"),day,"신랑","");
+        balance.linkPlanningItem(helper.id()); balance.complete(new BigDecimal("100000"),day); paymentRecords.save(balance);
+        // Issue an authenticated session for this test user without touching production accounts.
+        var token=auth.login(email,"test-password").token();
+        var body="""
+            {"serviceGroup":"스튜디오","itemName":"헬퍼","vendorName":"헬퍼 업체","status":"CONTRACTED","packageContract":false,"packageParentId":%d,"extraAmount":300000,"extraDueDate":"2026-11-18"}
+            """.formatted(parent.getId());
+        var request=java.net.http.HttpRequest.newBuilder(java.net.URI.create("http://localhost:"+port+"/api/v1/planning-items/"+helper.id()))
+            .header("Authorization","Bearer "+token).header("X-Workspace-Id",workspaceId.toString()).header("Content-Type","application/json")
+            .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(body)).build();
+        var response=java.net.http.HttpClient.newHttpClient().send(request,java.net.http.HttpResponse.BodyHandlers.ofString());
+        assertEquals(409,response.statusCode());
+        assertTrue(response.body().contains("detail")); assertTrue(response.body().contains("이미 납부"));
+        assertNull(items.findById(helper.id()).orElseThrow().getPackageParentId());
     }
     @Test void includedItemExtraIsSeparateFromPackageBaseInstallments() {
         var parent=contract();

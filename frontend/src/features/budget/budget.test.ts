@@ -45,3 +45,12 @@ describe('completed payment visibility',()=>{
     expect(summarizePayments(payments)).toEqual(before)
   })
 })
+
+describe('cancelled duplicate installments',()=>{
+  it('never shows cancelled schedules as payable, even when completed rows are visible',async()=>{
+    const {filterCompletedPayments}=await import('./budget')
+    const cancelled={...payments[2],status:'CANCELLED' as const}
+    expect(filterCompletedPayments([cancelled,...payments],true)).toEqual(payments)
+    expect(filterCompletedPayments([cancelled,...payments],false).map(payment=>payment.id)).toEqual(['2','3'])
+  })
+})
