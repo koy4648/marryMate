@@ -57,7 +57,7 @@ class SharedBudgetTests {
         assertTrue(updated.payments().stream().allMatch(p->p.planningItemId().equals(item.getId()) && p.dueDate().equals(day.plusDays(10))));
         assertEquals(0,new BigDecimal("3200800").compareTo(updated.payments().stream().map(BudgetService.PaymentView::scheduledAmount).reduce(BigDecimal.ZERO,BigDecimal::add)));
     }
-    @Test void onlyPaidInstallmentsKeepTheirPayerWhenSavedAndRevised() {
+    @Test void scheduledAndPaidInstallmentsKeepTheirOwnPayerWhenSavedAndRevised() {
         var item=contract();
         var payers=List.of("신랑","신부","신부 측 부모님");
         var separate=java.util.stream.IntStream.range(0,3).mapToObj(i->{
@@ -68,7 +68,7 @@ class SharedBudgetTests {
         var saved=budgets.get(workspaceId,userId).payments();
         for(int i=0;i<3;i++) {
             final var stage=separate.get(i);
-            assertEquals(stage.paid()?payers.get(i):"미정",saved.stream().filter(p->p.type().equals(stage.type())).findFirst().orElseThrow().payer());
+            assertEquals(payers.get(i),saved.stream().filter(p->p.type().equals(stage.type())).findFirst().orElseThrow().payer());
         }
         var changed=new java.util.ArrayList<>(separate);
         var balance=separate.get(2);
@@ -80,13 +80,13 @@ class SharedBudgetTests {
         var paidBalance=revised.stream().filter(p->p.type().equals("BALANCE")).findFirst().orElseThrow();
         assertEquals("신랑 측 부모님",paidBalance.payer()); assertEquals("PAID",paidBalance.status());
     }
-    @Test void scheduledPaymentGetsPayerOnlyWhenCompletedAndClearsItWhenReopened() {
+    @Test void scheduledPaymentKeepsPlannedPayerAndCanReturnToUndecided() {
         var payment=budgets.addPayment(workspaceId,userId,new BudgetService.CreatePayment("기타","예정 결제","OTHER",new BigDecimal("10000"),day.minusDays(1),"신부",""));
-        assertEquals("미정",payment.payer());
+        assertEquals("신부",payment.payer());
         var paid=budgets.complete(workspaceId,userId,payment.id(),new BigDecimal("10000"),day,"신랑");
         assertEquals("신랑",paid.payer()); assertEquals("PAID",paid.status());
         var record=paymentRecords.findById(payment.id()).orElseThrow();
-        record.revise(new BigDecimal("10000"),day,"신랑",false,null); paymentRecords.save(record);
+        record.revise(new BigDecimal("10000"),day,"미정",false,null); paymentRecords.save(record);
         assertEquals("미정",budgets.get(workspaceId,userId).payments().stream().filter(p->p.id().equals(payment.id())).findFirst().orElseThrow().payer());
     }
     @Test void totalChangeRequiresConfirmationAndUpdatesPackageBaseWithPaymentsAtomically() {

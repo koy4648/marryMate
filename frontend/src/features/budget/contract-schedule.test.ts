@@ -19,7 +19,7 @@ describe('saved contract schedule', () => {
     expect(result.stages.map(stage => stage.amount)).toEqual([0, 0, 1000000])
     expect(result.stages.map(stage => stage.date)).toEqual(['', '', '2027-01-01'])
     expect(result.stages.map(stage => stage.paidDate)).toEqual(['', '', ''])
-    expect(result.stages.map(stage => stage.payer)).toEqual(['미정', '미정', '미정'])
+    expect(result.stages.map(stage => stage.payer)).toEqual(['미정', '미정', '신부'])
     expect(result.stages.reduce((sum, stage) => sum + stage.amount, 0)).toBe(item.packageBaseAmount)
   })
   it('keeps exact amounts, payers and paid dates, including explicit zero payments', () => {
