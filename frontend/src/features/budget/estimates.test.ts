@@ -70,3 +70,14 @@ describe('shared estimates', () => {
     expect(budgetEstimates([honeymoon], [], [], true)).toHaveLength(1)
   })
 })
+
+describe('settled estimates',()=>{
+  it('hides only fully funded contracts, retaining unpaid extras and partial payments',async()=>{
+    const {isEstimateSettled}=await import('./estimates')
+    const paid={...payment,scheduledAmount:1000,actualAmount:1000,status:'PAID' as const}
+    expect(isEstimateSettled({planned:1000,linked:[paid]})).toBe(true)
+    expect(isEstimateSettled({planned:1500,linked:[paid]})).toBe(false)
+    expect(isEstimateSettled({planned:1000,linked:[{...paid,status:'PARTIALLY_PAID',actualAmount:500}]})).toBe(false)
+    expect(isEstimateSettled({planned:0,linked:[]})).toBe(false)
+  })
+})

@@ -1,6 +1,6 @@
 import type { PlanningItem } from '../planning/planning'
 import type { VenueReview } from '../../lib/api'
-import type { Payment } from './budget'
+import { summarizePayments, type Payment } from './budget'
 
 export function itemExtra(item: PlanningItem) {
   return item.extraAmount ?? (item.packageContract ? item.packageAdditionalAmount??0 : 0)
@@ -40,4 +40,10 @@ export function budgetEstimates(items: PlanningItem[], reviews: VenueReview[], p
     const quote = itemQuote(item, reviews, items)
     return [{ item, quote, confirmed: !!selected, linked, includedIds, planned: Math.max(quote, committed, item.actualAmount), actual: item.actualAmount }]
   })
+}
+
+
+export function isEstimateSettled(entry:{planned:number;linked:Payment[]}) {
+  const summary=summarizePayments(entry.linked)
+  return entry.linked.some(payment=>payment.status==='PAID') && summary.remaining===0 && summary.pendingCount===0 && summary.paid>=entry.planned
 }

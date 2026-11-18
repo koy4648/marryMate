@@ -87,3 +87,8 @@ export function parseWon(value: string) {
   if (!/^\d{1,15}$/.test(digits)) throw new Error('원 단위의 금액을 입력해 주세요.')
   return Number(digits)
 }
+
+
+export function filterCompletedPayments(payments:Payment[], showCompleted:boolean) {
+  return showCompleted ? payments : payments.filter(payment=>payment.status!=='PAID')
+}

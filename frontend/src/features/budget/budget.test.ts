@@ -35,3 +35,13 @@ describe('payment budget', () => {
   })
 })
 
+
+describe('completed payment visibility',()=>{
+  it('hides paid rows without changing the underlying ledger or totals',async()=>{
+    const {filterCompletedPayments}=await import('./budget')
+    const before=summarizePayments(payments)
+    expect(filterCompletedPayments(payments,false).map(payment=>payment.id)).toEqual(['2','3'])
+    expect(filterCompletedPayments(payments,true)).toEqual(payments)
+    expect(summarizePayments(payments)).toEqual(before)
+  })
+})
