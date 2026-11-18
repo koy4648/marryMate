@@ -86,7 +86,7 @@ public class PlanningService {
     private void apply(PlanningItem item, ChangeItem command) {
         if (command.packageParentId() != null) {
             PlanningItem parent = find(item.getWorkspaceId(), command.packageParentId());
-            if (!parent.isPackageContract() || parent.getPackageParentId()!=null || parent.getId().equals(item.getId()) || command.packageContract()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"포함 항목은 다른 패키지 계약에만 연결할 수 있어요.");
+            if (!parent.isPackageContract() || "SKIPPED".equals(parent.getStatus()) || parent.getPackageParentId()!=null || parent.getId().equals(item.getId()) || command.packageContract()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"포함 항목은 다른 패키지 계약에만 연결할 수 있어요.");
         }
         if(command.packageParentId()!=null && item.getId()!=null && payments.existsByPlanningItemId(item.getId())) throw new ResponseStatusException(HttpStatus.CONFLICT,"개별 결제가 연결된 항목은 패키지에 포함할 수 없어요.");
         if(!command.packageContract() && items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(item.getWorkspaceId()).stream().anyMatch(child->item.getId()!=null && item.getId().equals(child.getPackageParentId()))) throw new ResponseStatusException(HttpStatus.CONFLICT,"연결된 포함 항목을 개별 계약으로 변경한 뒤 패키지를 해제해 주세요.");
@@ -98,8 +98,13 @@ public class PlanningService {
         if (quote.signum() < 0 || actual.signum() < 0 || packageBase.signum() < 0 || packageAdditional.signum() < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "금액은 0원 이상이어야 합니다.");
         if(command.packageContract()) PackageInclusions.parts(command.packageIncludedItems());
         item.change(command.packageContract() ? "패키지" : command.serviceGroup(), command.itemName(), command.vendorName(), command.status(), command.scheduleDate(),
-            quote, actual, command.packageContract(), packageBase, packageAdditional, command.packageIncludedItems(),
+            command.packageParentId()!=null ? BigDecimal.ZERO : quote, command.packageParentId()!=null ? BigDecimal.ZERO : actual, command.packageContract(), packageBase, packageAdditional, command.packageIncludedItems(),
             command.packageAdditionalDetails(), command.rating(), command.reviewType(), command.review(), command.pros(), command.cons(), command.memo());
+        if(command.packageParentId()!=null) {
+            PlanningItem parent=find(item.getWorkspaceId(),command.packageParentId());
+            String label=PackageInclusions.labelFor(item.getServiceGroup(),item.getItemName());
+            if(label!=null && PackageInclusions.parts(parent.getPackageIncludedItems()).stream().noneMatch(part->part.group().equals(item.getServiceGroup())&&part.name().equals(item.getItemName()))) parent.includeItem(label);
+        }
     }
 
     private boolean untouched(PlanningItem item) {
@@ -125,8 +130,15 @@ public class PlanningService {
         }
         for(var parent:parents) {
             for(var part:PackageInclusions.parts(parent.getPackageIncludedItems())) {
-                var linked=all.stream().filter(c->parent.getId().equals(c.getPackageParentId()) && part.group().equals(c.getServiceGroup()) && part.name().equals(c.getItemName())).findFirst();
-                if(linked.isPresent()) { linked.get().linkInclusion(parent.getId(),part.label()); continue; }
+                var linked=all.stream().filter(c->parent.getId().equals(c.getPackageParentId()) && part.group().equals(c.getServiceGroup()) && part.name().equals(c.getItemName()))
+                    .sorted(java.util.Comparator.comparing(this::untouched)).toList();
+                if(!linked.isEmpty()) {
+                    linked.getFirst().linkInclusion(parent.getId(),part.label());
+                    for(var duplicate:linked.subList(1,linked.size())) {
+                        if(duplicate.getPackageInclusion()!=null && untouched(duplicate)) { items.delete(duplicate); all.remove(duplicate); }
+                    }
+                    continue;
+                }
                 var blank=all.stream().filter(c->!c.isPackageContract() && c.getPackageParentId()==null && part.group().equals(c.getServiceGroup()) && part.name().equals(c.getItemName()) && untouched(c)).findFirst();
                 PlanningItem child=blank.orElseGet(()->{
                     var created=items.save(new PlanningItem(workspaceId,part.group(),part.name())); all.add(created); return created;

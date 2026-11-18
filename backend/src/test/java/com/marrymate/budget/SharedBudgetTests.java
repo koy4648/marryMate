@@ -101,6 +101,22 @@ class SharedBudgetTests {
         var saved=items.findById(child.id()).orElseThrow();
         assertNull(saved.getPackageParentId()); assertEquals("방문 기록",saved.getMemo()); assertEquals(day,saved.getScheduleDate());
     }
+    @Test void assigningRecordedItemToPackageReplacesOnlyBlankGeneratedPlaceholder() {
+        var parent=packageWith("다이렉트","본식 헤어·메이크업");
+        var recorded=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",null));
+        planning.update(workspaceId,userId,recorded.id(),new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,new BigDecimal("100000"),BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","방문 메모",parent.id()));
+        var linked=planning.list(workspaceId,userId).stream().filter(i->parent.id().equals(i.packageParentId())).toList();
+        assertEquals(1,linked.size()); assertEquals(recorded.id(),linked.getFirst().id());
+        assertEquals(day,linked.getFirst().scheduleDate()); assertEquals("방문 메모",linked.getFirst().memo());
+        assertEquals(0,BigDecimal.ZERO.compareTo(linked.getFirst().quotedAmount()));
+    }
+    @Test void assigningKnownPreparationItemAlsoUpdatesParentInclusions() {
+        var parent=packageWith("다이렉트","DVD");
+        var linked=planning.create(workspaceId,userId,new PlanningService.ChangeItem("본식","헤어·메이크업","헤움","CONTRACTED",day,BigDecimal.ZERO,BigDecimal.ZERO,false,BigDecimal.ZERO,BigDecimal.ZERO,"","",null,"NONE","","","","",parent.id()));
+        assertEquals(parent.id(),linked.packageParentId());
+        assertTrue(items.findById(parent.id()).orElseThrow().getPackageIncludedItems().contains("본식 헤어·메이크업"));
+        assertEquals(2,planning.list(workspaceId,userId).stream().filter(i->parent.id().equals(i.packageParentId())).count());
+    }
     @Test void unrelatedUserCannotChangeContractPayments() {
         var item=contract(); var other=auth.signup(UUID.randomUUID()+"@test.local","test-password","다른 사용자",null);
         assertThrows(ResponseStatusException.class,()->budgets.contract(workspaceId,other.user().id(),item.getId(),stages(day)));

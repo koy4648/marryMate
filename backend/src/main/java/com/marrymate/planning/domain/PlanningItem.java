@@ -36,6 +36,13 @@ public class PlanningItem {
     @Column(name="package_inclusion", length=120) private String packageInclusion;
     public String getPackageInclusion() { return packageInclusion; }
     public void linkPackage(Long id) { if(!java.util.Objects.equals(packageParentId,id)) packageInclusion=null; packageParentId=id; }
+    public void includeItem(String label) {
+        var labels=new java.util.LinkedHashSet<>(java.util.Arrays.asList(packageIncludedItems.split("\\|")));
+        labels.remove(""); labels.add(label);
+        String updated=String.join("|",labels);
+        if(updated.length()>2000) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"패키지 포함 항목이 너무 많아요.");
+        packageIncludedItems=updated; updatedAt=Instant.now();
+    }
     public void linkInclusion(Long id,String label) { packageParentId=id; packageInclusion=label; }
     protected PlanningItem() {}
 

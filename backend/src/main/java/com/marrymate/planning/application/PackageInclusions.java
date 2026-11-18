@@ -21,6 +21,9 @@ final class PackageInclusions {
     private static Map.Entry<String,List<Part>> entry(String label, String group, String... names) {
         return Map.entry(label, Arrays.stream(names).map(name->new Part(label,group,name)).toList());
     }
+    static String labelFor(String group,String name) {
+        return PARTS.values().stream().flatMap(List::stream).filter(part->part.group().equals(group)&&part.name().equals(name)).map(Part::label).findFirst().orElse(null);
+    }
     static List<Part> parts(String included) {
         Map<String,Part> unique=new LinkedHashMap<>();
         for(String raw:(included==null?"":included).split("\\|")) {

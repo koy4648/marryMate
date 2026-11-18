@@ -639,3 +639,8 @@ footer { border-color:rgba(241,236,223,.18); background:#191b16; }
 .package-detail-items button>span:last-child { font-size:11px; color:var(--muted); }
 .package-payment-preview p { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; font-size:12px; padding:12px 0; border-bottom:1px solid var(--line); }
 @media(max-width:620px) { .package-list { grid-template-columns:1fr; }.package-overview { padding:24px; }.package-detail-items button { align-items:flex-start; }.package-detail-items button>span:last-child { max-width:110px; } }
+
+.package-membership { padding:20px; margin:4px 0 24px; border:1px solid var(--line); background:var(--rose-soft); }
+.package-membership label { display:grid; gap:10px; font-weight:600; font-size:13px; }
+.package-membership select { width:100%; min-height:44px; padding:10px 12px; color:var(--ink); background:var(--paper); border:1px solid var(--line); font:inherit; }
+.package-membership p,.package-membership small { margin:10px 0 0; font-size:11px; line-height:1.8; color:var(--muted); }
