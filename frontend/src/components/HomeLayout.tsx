@@ -15,9 +15,8 @@ function readPreferences(key: string): Preferences {
   } catch { return defaults }
 }
 
-export function HomeLayout({ storageKey, widgets, events, today, onEvent }: { storageKey: string; widgets: Record<Exclude<Card, 'calendar'>, ReactNode>; events: CalendarEvent[]; today: string; onEvent: (event: CalendarEvent) => void }) {
+export function HomeLayout({ storageKey, widgets, events, today, onEvent, editing, onSettingsClose }: { editing: boolean; onSettingsClose: () => void; storageKey: string; widgets: Record<Exclude<Card, 'calendar'>, ReactNode>; events: CalendarEvent[]; today: string; onEvent: (event: CalendarEvent) => void }) {
   const [preferences, setPreferences] = useState(() => readPreferences(storageKey))
-  const [editing, setEditing] = useState(false)
   const [error, setError] = useState('')
   function update(next: Preferences) {
     setPreferences(next)
@@ -35,10 +34,10 @@ export function HomeLayout({ storageKey, widgets, events, today, onEvent }: { st
   const currentWeek = Math.floor(cells.findIndex(cell => cell.date === today) / 7)
   const displayedCells = preferences.calendar === 'month' ? cells : cells.slice(currentWeek * 7, currentWeek * 7 + 7)
   return <>
-    <div className="home-toolbar"><button className="secondary" aria-expanded={editing} aria-controls="home-settings" onClick={() => setEditing(!editing)}>{editing ? '꾸미기 완료' : '홈 꾸미기'}</button></div>
+    <div className="home-toolbar">{editing && <button className="secondary" onClick={onSettingsClose}>꾸미기 완료</button>}</div>
     {editing && <section id="home-settings" className="panel home-settings"><h2>내 홈 구성</h2><p>보고 싶은 카드를 고르고 순서를 바꿔보세요. 이 브라우저에 계정·공간별로 저장돼요.</p>{preferences.order.map((id, index) => <div className="navigation-choice-row" key={id}><label><input type="checkbox" checked={!preferences.hidden.includes(id)} onChange={event => update({ ...preferences, hidden: event.target.checked ? preferences.hidden.filter(value => value !== id) : [...preferences.hidden, id] })}/>{cards.find(card => card.id === id)!.label}</label><div className="navigation-move-controls"><button disabled={index === 0} aria-label={`${cards.find(card => card.id === id)!.label} 위로 이동`} onClick={() => move(id, -1)}>위로</button><button disabled={index === preferences.order.length - 1} aria-label={`${cards.find(card => card.id === id)!.label} 아래로 이동`} onClick={() => move(id, 1)}>아래로</button></div></div>)}<button className="secondary" onClick={() => update(defaults)}>기본 구성으로</button></section>}
     {error && <p role="alert" className="form-error">{error}</p>}
     <div className="home-cards">{preferences.order.filter(id => !preferences.hidden.includes(id)).map(id => <div key={id} className={`home-card home-card-${id}`}>{id !== 'calendar' ? widgets[id] : <section className="calendar-panel home-calendar"><div className="section-heading"><div><p className="eyebrow">우리의 날짜들</p><h2>{date.getFullYear()}년 {date.getMonth() + 1}월</h2></div><div className="home-calendar-options" role="group" aria-label="홈 캘린더 표시 범위">{(['week', 'month'] as const).map(mode => <button key={mode} className="secondary" aria-pressed={preferences.calendar === mode} onClick={() => update({ ...preferences, calendar: mode })}>{mode === 'week' ? '이번 주' : '한 달'}</button>)}</div></div><div className="weekdays">{['일', '월', '화', '수', '목', '금', '토'].map(day => <span key={day}>{day}</span>)}</div><div className="calendar-grid">{displayedCells.map(cell => <article key={cell.date} className={`${cell.currentMonth ? '' : 'outside'} ${cell.date === today ? 'today' : ''}`}><time dateTime={cell.date}>{cell.day}</time><div>{events.filter(event => event.date === cell.date).map(event => <button key={event.id} className={`${event.kind} ${event.done ? 'event-done' : ''}`} onClick={() => onEvent(event)}><strong>{event.time && `${event.time} `}{event.title}</strong><small>{event.detail}</small></button>)}</div></article>)}</div></section>}</div>)}</div>
-    {preferences.hidden.length === cards.length && <p className="empty">홈 꾸미기에서 보고 싶은 카드를 선택해 주세요.</p>}
+    {preferences.hidden.length === cards.length && <p className="empty">프로필의 홈 꾸미기에서 보고 싶은 카드를 선택해 주세요.</p>}
   </>
 }
