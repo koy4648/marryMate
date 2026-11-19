@@ -30,7 +30,7 @@ public class PlanningItem {
         BigDecimal total=mealPrice.multiply(BigDecimal.valueOf(guarantee)).add(rentalFee);
         if(total.signum()<=0 || total.precision()>15) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"웨딩홀 총액은 0원보다 크고 15자리 이하여야 해요.");
         venueMealPrice=mealPrice; venueGuarantee=guarantee; venueRentalFee=rentalFee;
-        reviseContractAmount(total);
+        updatedAt=Instant.now();
     }
     @Column(name = "actual_amount", nullable = false, precision = 15, scale = 0) private BigDecimal actualAmount;
     @Column(name = "package_contract", nullable = false) private boolean packageContract;
@@ -68,6 +68,16 @@ public class PlanningItem {
     public LocalDate getExtraDueDate() { return extraDueDate; }
     public void changeExtras(BigDecimal amount,String details,LocalDate dueDate) {
         extraAmount=packageContract?BigDecimal.ZERO:amount; extraDetails=packageContract?"":value(details); extraDueDate=amount.signum()>0?dueDate:null;
+    }
+    @Column(name="expected_attendees",nullable=false) private int expectedAttendees;
+    @ElementCollection
+    @CollectionTable(name="gathering_attendees",joinColumns=@JoinColumn(name="planning_item_id"))
+    @OrderColumn(name="attendee_order")
+    private java.util.List<GatheringAttendee> attendees=new java.util.ArrayList<>();
+    public int getExpectedAttendees() { return expectedAttendees; }
+    public java.util.List<GatheringAttendee> getAttendees() { return attendees; }
+    public void changeAttendees(int count,java.util.List<GatheringAttendee> people) {
+        expectedAttendees=count; attendees.clear(); attendees.addAll(people); updatedAt=Instant.now();
     }
     protected PlanningItem() {}
 

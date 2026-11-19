@@ -9,3 +9,7 @@ export function venueBalance(total:number,deposit:number,interim:number) {
   if(balance<0) throw new Error('계약금과 중도금 합계가 웨딩홀 총액보다 커요. 금액을 확인해 주세요.')
   return balance
 }
+
+export function venueGiftEstimate(mealPrice:number,guarantee:number) {
+  return venueContractTotal(mealPrice,guarantee,0)
+}

@@ -1,3 +1,4 @@
+import { gatheringPeople, isGathering, type GatheringAttendee } from './gatherings'
 import type { Payment } from '../budget/budget'
 
 export type PlanningStatus = 'TODO' | 'RESEARCHING' | 'SCHEDULED' | 'CONTRACTED' | 'DONE' | 'SKIPPED'
@@ -9,6 +10,8 @@ export type PlanningItem = {
   venueRentalFee?: number | null
   contractAmountOverride?: number | null
   packageParentId?: number | null
+  expectedAttendees?: number
+  attendees?: GatheringAttendee[]
   id: number
   serviceGroup: string
   itemName: string
@@ -60,8 +63,8 @@ export function planningProgress(items: PlanningItem[]) {
 
 export function calendarEvents(items: PlanningItem[], payments: Payment[], weddingDate: string | null = null): CalendarEvent[] {
   const plans: CalendarEvent[] = items.filter(item => item.scheduleDate && item.status !== 'SKIPPED').map(item => ({
-    id: `plan-${item.id}`, date: item.scheduleDate!, time: item.scheduleTime?.slice(0,5)??null, title: item.vendorName || item.itemName,
-    detail: `${item.serviceGroup} · ${item.itemName}`, kind: 'planning' as const, done: item.status === 'DONE',
+    id: `plan-${item.id}`, date: item.scheduleDate!, time: item.scheduleTime?.slice(0,5)??null, title: isGathering(item) ? item.itemName : item.vendorName || item.itemName,
+    detail: isGathering(item) ? `청모 · ${item.vendorName || '장소 미정'} · ${gatheringPeople(item).total}명` : `${item.serviceGroup} · ${item.itemName}`, kind: 'planning' as const, done: item.status === 'DONE',
   }))
   const due: CalendarEvent[] = payments.filter(payment => !['CANCELLED', 'REFUNDED'].includes(payment.status)).map(payment => ({
     id: `payment-${payment.id}`, date: payment.status === 'PAID' ? payment.paidDate ?? payment.dueDate : payment.dueDate, title: payment.title,

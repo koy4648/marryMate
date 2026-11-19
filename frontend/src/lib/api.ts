@@ -1,4 +1,5 @@
 import type { Payment, PaymentType } from '../features/budget/budget'
+import type { GatheringAttendee } from '../features/planning/gatherings'
 import type { PlanningItem } from '../features/planning/planning'
 
 const API = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
@@ -6,6 +7,7 @@ const API = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 export type Session = { token: string; user: { id: number; email: string; nickname: string }; workspaceId: number | null }
 export type Workspace = { id: number; name: string; role: 'OWNER' | 'MEMBER'; weddingDate: string | null; homeTitle: string; homeMessage: string }
 export type Budget = { targetAmount: number; payments: Payment[]; includeHoneymoon: boolean; includeGifts: boolean; giftAmount: number }
+export type GatheringInput = { name: string; place: string; scheduleDate: string | null; scheduleTime: string | null; expectedAttendees: number; attendees: GatheringAttendee[]; status: PlanningItem['status']; amount: number; memo: string }
 export type PlanningItemInput = Omit<PlanningItem, 'id'>
 export type VenueReview = { id:number; planningItemId:number; reviewType:'SECRET_TOUR'|'CONSULTATION'|'GUEST_TOUR'; visitedDate:string|null; content:string; pros:string; cons:string; mealPrice:number; minimumGuarantee:number; rentalFee:number; serviceItems:string; sameDayBenefits:string }
 export type VenueReviewInput = Omit<VenueReview,'id'>
@@ -29,6 +31,9 @@ async function request<T>(path: string, init: RequestInit = {}, session?: Sessio
 }
 
 export const api = {
+  navigation: (session: Session) => request<string[]>('/api/v1/preferences/navigation', {}, session),
+  saveNavigation: (session: Session, menus: string[]) => request<string[]>('/api/v1/preferences/navigation', { method: 'PUT', body: JSON.stringify({ menus }) }, session),
+  saveGathering: (session: Session, input: GatheringInput, id?: number) => request<PlanningItem>(`/api/v1/gatherings${id === undefined ? '' : `/${id}`}`, { method: id === undefined ? 'POST' : 'PUT', body: JSON.stringify(input) }, session),
   signup: (email: string, password: string, nickname: string) => request<Session>('/api/v1/auth/signup', { method: 'POST', body: JSON.stringify({ email, password, nickname }) }),
   login: (email: string, password: string) => request<Session>('/api/v1/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   changePassword: (session: Session, currentPassword: string, newPassword: string) => request<Session>('/api/v1/auth/me/password', {method:'PATCH',body:JSON.stringify({currentPassword,newPassword})},session),
@@ -43,7 +48,7 @@ export const api = {
   budget: (session: Session) => request<Budget>('/api/v1/budget', {}, session),
   target: (session: Session, targetAmount: number) => request<Budget>('/api/v1/budget', { method: 'PUT', body: JSON.stringify({ targetAmount }) }, session),
   preferences: (session: Session, body: { includeHoneymoon: boolean; includeGifts: boolean; giftAmount: number }) => request<Budget>('/api/v1/budget/preferences', { method: 'PUT', body: JSON.stringify(body) }, session),
-  contract: (session: Session, id: number, stages: { type: PaymentType; amount: number; date: string | null; paid: boolean; paidDate: string | null; payer: string }[], revisedTotal?: number, venueTerms?: {mealPrice:number;guarantee:number;rentalFee:number}) => request<Budget>(`/api/v1/budget/contracts/${id}`, { method: 'PUT', body: JSON.stringify({ stages, revisedTotal, venueTerms }) }, session),
+  contract: (session: Session, id: number, stages: { type: PaymentType; amount: number; date: string | null; paid: boolean; paidDate: string | null; payer: string }[], revisedTotal?: number, venueTerms?: {mealPrice:number;guarantee:number;rentalFee:number}, giftEstimate?: {amount:number;deduct:boolean}) => request<Budget>(`/api/v1/budget/contracts/${id}`, { method: 'PUT', body: JSON.stringify({ stages, revisedTotal, venueTerms, giftEstimate }) }, session),
   addPayment: (session: Session, body: { category: string; title: string; type: PaymentType; scheduledAmount: number; dueDate: string; payer: string; memo: string }) => request<Payment>('/api/v1/budget/payments', { method: 'POST', body: JSON.stringify(body) }, session),
   completePayment: (session: Session, id: string | number, actualAmount: number, paidDate: string, payer: string) => request<Payment>(`/api/v1/budget/payments/${id}/complete`, { method: 'PATCH', body: JSON.stringify({ actualAmount, paidDate, payer }) }, session),
   planningItems: (session: Session) => request<PlanningItem[]>('/api/v1/planning-items', {}, session),

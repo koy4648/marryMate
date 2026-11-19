@@ -16,6 +16,7 @@ import com.marrymate.planning.repository.PlanningItemRepository;
 public class PlanningService {
     private static final List<Template> TEMPLATES = List.of(
         new Template("웨딩홀", "웨딩홀 투어"),
+        new Template("상견례", "상견례 식사"), new Template("상견례", "상견례 선물"),
         new Template("플래너", "웨딩 플래너"),
         new Template("본식 촬영", "본식 스냅·원판"), new Template("본식 촬영", "DVD"), new Template("본식 촬영", "아이폰 스냅"),
         new Template("스튜디오 촬영", "촬영 작가"), new Template("스튜디오 촬영", "헬퍼"), new Template("스튜디오 촬영", "헤어변형"),
@@ -78,7 +79,7 @@ public class PlanningService {
     public List<ItemView> selectCandidate(Long workspaceId, Long userId, Long itemId) {
         workspaces.requireMember(workspaceId, userId);
         PlanningItem selected = find(workspaceId, itemId);
-        if(selected.isPackageContract() || "식사".equals(selected.getServiceGroup()) || ("신혼여행".equals(selected.getServiceGroup()) && "숙소".equals(selected.getItemName()))) selected.contract();
+        if(selected.isPackageContract() || java.util.List.of("식사","청모").contains(selected.getServiceGroup()) || ("신혼여행".equals(selected.getServiceGroup()) && "숙소".equals(selected.getItemName()))) selected.contract();
         else items.findAllByWorkspaceIdOrderByServiceGroupAscItemNameAscIdAsc(workspaceId).stream()
             .filter(item -> item.getPackageParentId()==null && item.getServiceGroup().equals(selected.getServiceGroup()) && item.getItemName().equals(selected.getItemName()))
             .forEach(item -> { if (item.getId().equals(selected.getId())) item.contract(); else item.skip(); });
@@ -200,15 +201,16 @@ public class PlanningService {
                              BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount, String packageIncludedItems,
                              String packageAdditionalDetails, Integer rating, String reviewType,
                              String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime, BigDecimal extraAmount, String extraDetails, LocalDate extraDueDate) {}
+    public record AttendeeView(String name,String side) {}
     public record ItemView(Long id, String serviceGroup, String itemName, String vendorName, String status,
                            LocalDate scheduleDate, BigDecimal quotedAmount, BigDecimal actualAmount, Integer rating,
                            boolean packageContract, BigDecimal packageBaseAmount, BigDecimal packageAdditionalAmount,
                            String packageIncludedItems, String packageAdditionalDetails, String reviewType,
-                           String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime, BigDecimal extraAmount, String extraDetails, LocalDate extraDueDate, BigDecimal contractAmountOverride, BigDecimal venueMealPrice, Integer venueGuarantee, BigDecimal venueRentalFee) {
+                           String review, String pros, String cons, String memo, Long packageParentId, LocalTime scheduleTime, BigDecimal extraAmount, String extraDetails, LocalDate extraDueDate, BigDecimal contractAmountOverride, BigDecimal venueMealPrice, Integer venueGuarantee, BigDecimal venueRentalFee, int expectedAttendees, List<AttendeeView> attendees) {
         static ItemView from(PlanningItem item) { return new ItemView(item.getId(), item.getServiceGroup(), item.getItemName(),
             item.getVendorName(), item.getStatus(), item.getScheduleDate(), item.getQuotedAmount(), item.getActualAmount(),
             item.getRating(), item.isPackageContract(), item.getPackageBaseAmount(), item.getPackageAdditionalAmount(),
             item.getPackageIncludedItems(), item.getPackageAdditionalDetails(), item.getReviewType(), item.getReview(),
-            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId(), item.getScheduleTime(), item.getExtraAmount(), item.getExtraDetails(), item.getExtraDueDate(), item.getContractAmountOverride(), item.getVenueMealPrice(), item.getVenueGuarantee(), item.getVenueRentalFee()); }
+            item.getPros(), item.getCons(), item.getMemo(), item.getPackageParentId(), item.getScheduleTime(), item.getExtraAmount(), item.getExtraDetails(), item.getExtraDueDate(), item.getContractAmountOverride(), item.getVenueMealPrice(), item.getVenueGuarantee(), item.getVenueRentalFee(),item.getExpectedAttendees(),item.getAttendees().stream().map(person->new AttendeeView(person.getName(),person.getSide())).toList()); }
     }
 }

@@ -24,11 +24,16 @@ public class BudgetService {
         return contract(workspaceId,userId,itemId,stages,revisedTotal,null);
     }
     @Transactional public BudgetView contract(Long workspaceId, Long userId, Long itemId, List<ContractStage> stages, BigDecimal revisedTotal, VenueTerms venueTerms) {
+        return contract(workspaceId,userId,itemId,stages,revisedTotal,venueTerms,null);
+    }
+    @Transactional public BudgetView contract(Long workspaceId, Long userId, Long itemId, List<ContractStage> stages, BigDecimal revisedTotal, VenueTerms venueTerms, GiftEstimate giftEstimate) {
         workspaces.requireMember(workspaceId,userId);
         var item=planning.findByIdAndWorkspaceId(itemId,workspaceId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"계약을 찾지 못했어요."));
         if(item.getPackageParentId()!=null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"패키지 계약에서 결제를 관리해 주세요.");
         if(stages.size()!=3 || stages.stream().map(ContractStage::type).distinct().count()!=3) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"계약금·중도금·잔금을 각각 입력해 주세요.");
         if(!java.util.List.of("CONTRACTED","DONE").contains(item.getStatus())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"업체를 확정한 뒤 결제를 연결해 주세요.");
+        boolean venueTermsChanged=venueTerms!=null && (item.getVenueMealPrice()==null || item.getVenueGuarantee()==null || item.getVenueRentalFee()==null
+            || item.getVenueMealPrice().compareTo(venueTerms.mealPrice())!=0 || !item.getVenueGuarantee().equals(venueTerms.guarantee()) || item.getVenueRentalFee().compareTo(venueTerms.rentalFee())!=0);
         if(venueTerms!=null) item.changeVenueTerms(venueTerms.mealPrice(),venueTerms.guarantee(),venueTerms.rentalFee());
         BigDecimal expected=item.isPackageContract()?item.getPackageBaseAmount():item.getQuotedAmount();
         if("웨딩홀".equals(item.getServiceGroup()) && item.getContractAmountOverride()==null) {
@@ -37,13 +42,14 @@ public class BudgetService {
         }
         if(item.getContractAmountOverride()!=null && "웨딩홀".equals(item.getServiceGroup())) expected=item.getContractAmountOverride();
         BigDecimal total=stages.stream().map(ContractStage::amount).reduce(BigDecimal.ZERO,BigDecimal::add);
-        if(venueTerms!=null && revisedTotal!=null && revisedTotal.compareTo(expected)!=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"변경할 총액을 식대·보증인원·대관료 합계와 맞춰주세요.");
+        if(venueTerms!=null && (venueTermsChanged || item.getContractAmountOverride()==null)) expected=venueTerms.mealPrice().multiply(BigDecimal.valueOf(venueTerms.guarantee())).add(venueTerms.rentalFee());
         if(revisedTotal!=null) {
             if(revisedTotal.signum()<=0 || revisedTotal.precision()>15 || revisedTotal.stripTrailingZeros().scale()>0 || revisedTotal.compareTo(total)!=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"변경할 총액은 납입 합계와 같고 0원보다 커야 해요.");
             item.reviseContractAmount(revisedTotal); expected=revisedTotal;
             if(item.getQuotedAmount().precision()>15) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"추가금을 포함한 총액이 입력 범위를 초과했어요.");
         }
         if(total.compareTo(expected)!=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"계약금·중도금·잔금 합계를 계약 총액과 맞춰주세요.");
+        if(venueTerms!=null && item.getContractAmountOverride()==null) item.reviseContractAmount(expected);
         var existing=payments.findAllByWorkspaceIdOrderByDueDateAsc(workspaceId);
         for(var stage:stages) {
             var found=existing.stream().filter(p->itemId.equals(p.getPlanningItemId()) && stage.type().equals(p.getType())).findFirst();
@@ -53,8 +59,15 @@ public class BudgetService {
             Payment payment=found.orElseGet(()->new Payment(workspaceId,item.getServiceGroup(),(item.getVendorName().isBlank()?item.getItemName():item.getVendorName())+" · "+java.util.Map.of("DEPOSIT","계약금","INTERIM","중도금","BALANCE","잔금").get(stage.type()),stage.type(),stage.amount(),stage.date(),stage.payer(),"업체 계약 연결"));
             payment.linkPlanningItem(itemId); payment.revise(stage.amount(),stage.date(),stage.payer(),stage.paid(),stage.paidDate()); payments.save(payment);
         }
+        if(giftEstimate!=null) {
+            if(!"웨딩홀".equals(item.getServiceGroup())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"예상 축의금은 웨딩홀 계약에서 입력해 주세요.");
+            if(giftEstimate.amount()==null || giftEstimate.amount().signum()<0 || giftEstimate.amount().precision()>15 || giftEstimate.amount().stripTrailingZeros().scale()>0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"예상 축의금은 15자리 이하의 원 단위 금액으로 입력해 주세요.");
+            BudgetPlan plan=budgets.findByWorkspaceId(workspaceId).orElseGet(()->budgets.save(new BudgetPlan(workspaceId)));
+            plan.preferences(plan.isIncludeHoneymoon(),giftEstimate.deduct(),giftEstimate.amount());
+        }
         return view(workspaceId);
     }
+    public record GiftEstimate(@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero @jakarta.validation.constraints.Digits(integer=15,fraction=0) BigDecimal amount,boolean deduct) {}
     public record VenueTerms(@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero @jakarta.validation.constraints.Digits(integer=15,fraction=0) BigDecimal mealPrice,@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero Integer guarantee,@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero @jakarta.validation.constraints.Digits(integer=15,fraction=0) BigDecimal rentalFee) {}
     public record ContractStage(@jakarta.validation.constraints.Pattern(regexp="DEPOSIT|INTERIM|BALANCE") @jakarta.validation.constraints.NotNull String type,@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero @jakarta.validation.constraints.Digits(integer=15,fraction=0) BigDecimal amount,LocalDate date,boolean paid,LocalDate paidDate,@jakarta.validation.constraints.NotBlank String payer) {}
     private BudgetView view(Long workspaceId){BudgetPlan plan=budgets.findByWorkspaceId(workspaceId).orElse(new BudgetPlan(workspaceId)); BigDecimal target=plan.getTargetAmount(); List<PaymentView> items=payments.findAllByWorkspaceIdOrderByDueDateAsc(workspaceId).stream().map(PaymentView::from).toList(); return new BudgetView(target,items,plan.isIncludeHoneymoon(),plan.isIncludeGifts(),plan.getGiftAmount());}
